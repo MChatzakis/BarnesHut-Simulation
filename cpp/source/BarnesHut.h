@@ -65,6 +65,16 @@ public:
         return point;
     }
 
+    double getMass()
+    {
+        return mass;
+    }
+
+    std::string getName()
+    {
+        return name;
+    }
+
     std::string toString()
     {
         std::string output;
@@ -109,8 +119,11 @@ public:
 
     std::string toString()
     {
-        std::string str = "[";
-        str = center.toString() + " " + std::to_string(dimension) + "]";
+        std::string str;
+        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
+        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
+        //str += center.toString() + " " + std::to_string(dimension) + "]";
+        str = "x:[" + std::to_string(xStart) + "," + std::to_string(xEnd) + "] y:[" + std::to_string(yStart) + "," + std::to_string(yEnd) + "]";
         return str;
     }
 };
@@ -130,7 +143,12 @@ private:
     BHTree *quad4 = NULL;
 
 public:
-    BHTree(Region _region) : region{_region} {}
+    BHTree(Region _region) : region{_region} { std::cout << "Created BHTree in region: " << region.toString() << "\n"; }
+
+    std::vector<Entity *> getTotalEntities()
+    {
+        return totalEntities;
+    }
 
     BHTree *getQuad1()
     {
@@ -161,12 +179,14 @@ public:
     {
         double xCenter = region.getCenter().getX(), yCenter = region.getCenter().getY(), dim = region.getDimension();
 
+        std::cout << "---------------- Creating sub quads ----------------\n";
+
         quad1 = new BHTree(Region(Point(xCenter + dim / 2, yCenter + dim / 2), dim / 2));
         quad2 = new BHTree(Region(Point(xCenter - dim / 2, yCenter + dim / 2), dim / 2));
         quad3 = new BHTree(Region(Point(xCenter - dim / 2, yCenter - dim / 2), dim / 2));
         quad4 = new BHTree(Region(Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2));
 
-        std::cout << "New subquads created\n";
+        std::cout << "----------------   Creating ended   ----------------\n";
     }
 
     bool isLeaf()
@@ -176,9 +196,10 @@ public:
 
     bool insertEntity(Entity *_entity)
     {
+
         if (!region.containsPoint(_entity->getPoint()))
         {
-            std::cout << "Entity out of range!\n";
+            //std::cout << "Entity out of range!\n";
             return false;
         }
 
@@ -187,7 +208,8 @@ public:
             //empty leaf case
             if (entity == NULL)
             {
-                std::cout << "Insert to empty leaf\n";
+                //std::cout << "Inserted to empty leaf\n";
+                std::cout << "Insert entity " << _entity->getName() << " to empty leaf in the region " << region.toString() << ".\n";
                 entity = _entity;
                 return true;
             }
@@ -226,7 +248,7 @@ public:
     }
 };
 
-void printBHTree(BHTree *curr)
+void printBHTreeUtil(BHTree *curr)
 {
     Entity *e;
 
@@ -240,8 +262,20 @@ void printBHTree(BHTree *curr)
         std::cout << e->toString() << "\n";
     }
 
-    printBHTree(curr->getQuad1());
-    printBHTree(curr->getQuad2());
-    printBHTree(curr->getQuad3());
-    printBHTree(curr->getQuad4());
+    printBHTreeUtil(curr->getQuad1());
+    printBHTreeUtil(curr->getQuad2());
+    printBHTreeUtil(curr->getQuad3());
+    printBHTreeUtil(curr->getQuad4());
+}
+
+void printBHTree(BHTree *curr)
+{
+    if (curr == NULL)
+    {
+        return;
+    }
+    std::cout << "-------------------------------------------\n";
+    std::cout << "Printing BHTree containing " << curr->getTotalEntities().size() << " entities\n";
+    printBHTreeUtil(curr);
+    std::cout << "-------------------------------------------\n";
 }
