@@ -1,12 +1,17 @@
 #include <fstream>
 #include <cmath>
+#include <iostream>
+
 #include "BarnesHut.h"
 
 using namespace std;
 
-double loadEntities(string dataset, vector<Entity *> &entities);
-void printEntities(vector<Entity *> entities);
 BHTree *createBHTree(vector<Entity *> entities, double dims);
+double loadEntities(string dataset, vector<Entity *> &entities);
+
+void printEntities(vector<Entity *> entities);
+void printBHTreeUtil(BHTree *curr);
+void printBHTree(BHTree *curr);
 
 int main(int argc, char **argv)
 {
@@ -126,4 +131,36 @@ double F(Entity e1, Entity e2)
     double m2 = e2.getMass();
 
     return G * (m1 * m2) / pow(dist, 2);
+}
+
+void printBHTreeUtil(BHTree *curr)
+{
+    Entity *e;
+
+    if (curr == NULL)
+    {
+        return;
+    }
+
+    if (curr->isLeaf() && (e = curr->getEntity()) != NULL)
+    {
+        std::cout << e->toString() << "\n";
+    }
+
+    printBHTreeUtil(curr->getQuad1());
+    printBHTreeUtil(curr->getQuad2());
+    printBHTreeUtil(curr->getQuad3());
+    printBHTreeUtil(curr->getQuad4());
+}
+
+void printBHTree(BHTree *curr)
+{
+    if (curr == NULL)
+    {
+        return;
+    }
+    std::cout << "-------------------------------------------\n";
+    std::cout << "Printing BHTree containing " << curr->getTotalEntities().size() << " entities\n";
+    printBHTreeUtil(curr);
+    std::cout << "-------------------------------------------\n";
 }

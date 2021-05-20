@@ -247,35 +247,3 @@ public:
         return false;
     }
 };
-
-void printBHTreeUtil(BHTree *curr)
-{
-    Entity *e;
-
-    if (curr == NULL)
-    {
-        return;
-    }
-
-    if (curr->isLeaf() && (e = curr->getEntity()) != NULL)
-    {
-        std::cout << e->toString() << "\n";
-    }
-
-    printBHTreeUtil(curr->getQuad1());
-    printBHTreeUtil(curr->getQuad2());
-    printBHTreeUtil(curr->getQuad3());
-    printBHTreeUtil(curr->getQuad4());
-}
-
-void printBHTree(BHTree *curr)
-{
-    if (curr == NULL)
-    {
-        return;
-    }
-    std::cout << "-------------------------------------------\n";
-    std::cout << "Printing BHTree containing " << curr->getTotalEntities().size() << " entities\n";
-    printBHTreeUtil(curr);
-    std::cout << "-------------------------------------------\n";
-}
