@@ -4,22 +4,48 @@
 
 using namespace std;
 
-BHTree *bh = NULL;
-
-void loadEntities(string dataset);
+double loadEntities(string dataset, vector<Entity *> &entities);
+void printEntities(vector<Entity *> entities);
+BHTree *createBHTree(vector<Entity *> entities, double dims);
 
 int main(int argc, char **argv)
 {
-    loadEntities("./../tests/simple.txt");
+    BHTree *bh;
+    vector<Entity *> entities;
+    double dims;
 
+    dims = loadEntities("./../../datasets/input5.txt", entities);
+    printEntities(entities);
+
+    bh = createBHTree(entities, dims);
     printBHTree(bh);
 
     return 0;
 }
 
-void loadEntities(string dataset)
+BHTree *createBHTree(vector<Entity *> entities, double dims)
 {
-    int totalEntities = 0, dims = 0, entitiesCounter = 0;
+    BHTree *tree = new BHTree(Region(Point(0, 0), dims));
+    for (Entity *e : entities)
+    {
+        tree->insertEntity(e);
+    }
+
+    return tree;
+}
+
+void printEntities(vector<Entity *> entities)
+{
+    for (Entity *e : entities)
+    {
+        cout << e->toString() << "\n";
+    }
+}
+
+double loadEntities(string dataset, vector<Entity *> &entities)
+{
+    int totalEntities = 0, entitiesCounter = 0;
+    double dims = 0;
 
     string filename = string(dataset);
 
@@ -43,7 +69,7 @@ void loadEntities(string dataset)
         cout << "Dims: [" << -dims << ", " << dims << "]\n";
     }
 
-    bh = new BHTree(Region(Point(0, 0), dims)); //total dimen = 2dim
+    //bh = new BHTree(Region(Point(0, 0), dims)); //total dimen = 2dim
 
     while (entitiesCounter < totalEntities)
     {
@@ -61,12 +87,14 @@ void loadEntities(string dataset)
 
         entitiesCounter++;
 
-        bh->insertEntity(new Entity(Point(X, Y), S, Vx, Vy, M));
+        //bh->insertEntity(new Entity(Point(X, Y), S, Vx, Vy, M));
+        entities.push_back(new Entity(Point(X, Y), S, Vx, Vy, M));
     }
 
     input_file.close();
 
     cout << "--- Done parsing file\n";
+    return dims;
 }
 
 Point massCenter(Entity e1, Entity e2)
@@ -99,25 +127,3 @@ double F(Entity e1, Entity e2)
 
     return G * (m1 * m2) / pow(dist, 2);
 }
-
-double Fx(Entity e1, Entity e2)
-{
-    /*double f = F(e1, e2);
-    double dist = distance(e1, e2);
-    double x1 = e1.getPoint().getX();
-    double x2 = e2.getPoint().getX();
-
-    return f * (x2 - x1) / dist;*/
-}
-
-double Fy(Entity e1, Entity e2)
-{
-    /*double f = F(e1, e2);
-    double dist = distance(e1, e2);
-    double y1 = e1.getPoint().getY();
-    double y2 = e2.getPoint().getY();
-
-    return f * (y2 - y1) / dist;*/
-}
-
-double
