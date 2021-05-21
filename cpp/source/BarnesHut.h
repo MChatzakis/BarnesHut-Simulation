@@ -52,10 +52,16 @@ class Entity
 private:
     double Vy;
     double Vx;
+
     double mass;
+
+    double SFx = 0;
+    double SFy = 0;
 
     std::string name;
     Point point;
+
+    std::vector<Entity> interactingEntities;
 
 public:
     Entity(Point _point, std::string _name, double _Vx, double _Vy, double _mass) : point{_point}, name{_name}, Vx{_Vx}, Vy{_Vy}, mass{_mass} {}
@@ -65,14 +71,84 @@ public:
         return point;
     }
 
+    void setPoint(Point dPoint)
+    {
+        point = dPoint;
+    }
+
     double getMass()
     {
         return mass;
     }
 
+    double getVy()
+    {
+        return Vy;
+    }
+
+    double getVx()
+    {
+        return Vx;
+    }
+
+    void setVy(double _Vy)
+    {
+        Vy = _Vy;
+    }
+
+    void setVx(double _Vx)
+    {
+        Vx = _Vx;
+    }
+
+    double getSFy()
+    {
+        return SFy;
+    }
+
+    void setSFy(double SFy)
+    {
+        this->SFy = SFy;
+    }
+
+    double getSFx()
+    {
+        return SFx;
+    }
+
+    void setSFx(double SFx)
+    {
+        this->SFx = SFx;
+    }
+
+    void addToSFy(double dfy)
+    {
+        SFy += dfy;
+    }
+
+    void addToSFx(double dfx)
+    {
+        SFx += dfx;
+    }
+
     std::string getName()
     {
         return name;
+    }
+
+    std::vector<Entity> getInteractingEntities()
+    {
+        return interactingEntities;
+    }
+
+    void clearInteractionEntities()
+    {
+        interactingEntities.clear();
+    }
+
+    void addInteractionEntity(Entity en)
+    {
+        interactingEntities.push_back(en);
     }
 
     std::string toString()
@@ -135,7 +211,7 @@ private:
 
     std::vector<Entity *> totalEntities;
 
-    Entity *entity = NULL;
+    Entity *entity = NULL; //When the current node is not leaf, this entity represents the mass center of the region
 
     BHTree *quad1 = NULL;
     BHTree *quad2 = NULL;
@@ -175,6 +251,11 @@ public:
         return entity;
     }
 
+    Region getRegion()
+    {
+        return region;
+    }
+
     void createSubQuads()
     {
         double xCenter = region.getCenter().getX(), yCenter = region.getCenter().getY(), dim = region.getDimension();
@@ -211,7 +292,19 @@ public:
                 //std::cout << "Inserted to empty leaf\n";
                 std::cout << "Insert entity " << _entity->getName() << " to empty leaf in the region " << region.toString() << ".\n";
                 entity = _entity;
+                totalEntities.push_back(_entity);
                 return true;
+            }
+
+            if (entity->getPoint().getX() == _entity->getPoint().getX() &&
+                entity->getPoint().getY() == _entity->getPoint().getY())
+            {
+                std::cout << "Colision detected -- Patching the points\n";
+
+                double dx = 0.01;
+                double dy = 0.01;
+
+                _entity->setPoint(Point(_entity->getPoint().getX() + dx, _entity->getPoint().getY() + dy));
             }
 
             //else divide the tree
@@ -222,7 +315,7 @@ public:
                 quad3->insertEntity(entity) ||
                 quad4->insertEntity(entity))
             {
-                totalEntities.push_back(entity);
+                //totalEntities.push_back(entity);
                 entity = NULL;
             }
             else
@@ -237,6 +330,8 @@ public:
             quad4->insertEntity(_entity))
         {
             totalEntities.push_back(_entity);
+            //calculate mass center
+            entity = calcRegionMassCenterEntity();
             return true;
         }
         else
@@ -245,5 +340,33 @@ public:
         }
 
         return false;
+    }
+
+    double calcTotalMass()
+    {
+        double m = 0;
+        for (Entity *e : totalEntities)
+        {
+            m += e->getMass();
+        }
+        return m;
+    }
+
+    Entity *calcRegionMassCenterEntity()
+    {
+        double totMass = calcTotalMass();
+        double totCenterX = 0;
+        double totCenterY = 0;
+
+        for (Entity *e : totalEntities)
+        {
+            totCenterX += e->getMass() * e->getPoint().getX();
+            totCenterY += e->getMass() * e->getPoint().getY();
+        }
+
+        totCenterX = totCenterX / totMass;
+        totCenterY = totCenterY / totMass;
+
+        return new Entity(Point(totCenterX, totCenterY), "MassCR", 0, 0, totMass);
     }
 };

@@ -7,25 +7,147 @@
 using namespace std;
 
 BHTree *createBHTree(vector<Entity *> entities, double dims);
+
 double loadEntities(string dataset, vector<Entity *> &entities);
+double F(Entity e1, Entity e2);
+double Fy(Entity e1, Entity e2);
+double Fx(Entity e1, Entity e2);
 
 void printEntities(vector<Entity *> entities);
 void printBHTreeUtil(BHTree *curr);
 void printBHTree(BHTree *curr);
+void BarnesHut(vector<Entity *> &entities, double dims, int iterations, int dt);
+void updateNetForceData(Entity *e, BHTree *bh);
+void calcNewPos(Entity *e, double dt);
+
+bool containsPoint(vector<Entity *> entities, Entity *en);
 
 int main(int argc, char **argv)
 {
-    BHTree *bh;
     vector<Entity *> entities;
     double dims;
 
-    dims = loadEntities("./../../datasets/input5.txt", entities);
+    dims = loadEntities("./../../datasets/input1.txt", entities);
     printEntities(entities);
 
-    bh = createBHTree(entities, dims);
-    printBHTree(bh);
+    //bh = createBHTree(entities, dims);
+    //printBHTree(bh);
+
+    BarnesHut(entities, dims, 10000, 1);
 
     return 0;
+}
+
+void BarnesHut(vector<Entity *> &entities, double dims, int iterations, int dt)
+{
+    BHTree *bh;
+
+    for (int i = 0; i < iterations; i++)
+    {
+        bh = createBHTree(entities, dims);
+
+        for (Entity *e : entities)
+        {
+            updateNetForceData(e, bh);
+        }
+
+        // -- Barrier --
+
+        for (Entity *e : entities)
+        {
+            calcNewPos(e, dt);
+        }
+    }
+
+    printEntities(entities);
+}
+
+void updateNetForceData(Entity *e, BHTree *bh)
+{
+    bool pathFound = false;
+
+    if (bh == NULL)
+    {
+        return;
+    }
+
+    if (bh->isLeaf())
+    {
+        assert(bh->getEntity() == e);
+        return;
+    }
+
+    BHTree *quads[4] = {bh->getQuad1(), bh->getQuad2(), bh->getQuad3(), bh->getQuad4()};
+    BHTree *quadToGo = NULL;
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (quads[i] != NULL)
+        {
+            Entity *cent = quads[i]->getEntity();
+            Region reg = quads[i]->getRegion();
+
+            if (cent == NULL)
+            {
+                continue;
+            }
+
+            vector<Entity *> entitiesOfRegion = quads[i]->getTotalEntities();
+
+            //ContainsPoint is really slow.. =>optimize?
+            //if (  containsPoint(entitiesOfRegion, e))
+            if (!pathFound && reg.containsPoint(e->getPoint()))
+            {
+                cout << "Found the region that body " << e->getName() << " belongs. Going to squad[ " << i << " ]\n";
+                quadToGo = quads[i];
+
+                pathFound = true;
+            }
+            else
+            {
+                cout << "Calculating net force for body " << e->toString() << " by body " << cent->toString() << "\n";
+
+                double fx = Fx(*cent, *e);
+                double fy = Fy(*cent, *e);
+
+                e->addToSFx(fx);
+                e->addToSFy(fy);
+            }
+        }
+    }
+
+    //fix;
+    //assert(quadToGo);
+    updateNetForceData(e, quadToGo);
+}
+
+void calcNewPos(Entity *e, double dt)
+{
+    double SFy = e->getSFy();
+    double SFx = e->getSFx();
+    double m = e->getMass();
+
+    double oldVx = e->getVx();
+    double oldVy = e->getVy();
+    double oldX = e->getPoint().getX();
+    double oldY = e->getPoint().getY();
+
+    double Ax = SFx / m;
+    double Ay = SFy / m;
+
+    double newVx = oldVx + Ax * dt;
+    double newVy = oldVy + Ay * dt;
+
+    double newX = oldX + newVx * dt;
+    double newY = oldY + newVy * dt;
+
+    e->setPoint(Point(newX, newY));
+
+    e->setSFx(0);
+    e->setSFy(0);
+
+    e->setVx(newVx);
+    e->setVy(newVy);
 }
 
 BHTree *createBHTree(vector<Entity *> entities, double dims)
@@ -133,6 +255,24 @@ double F(Entity e1, Entity e2)
     return G * (m1 * m2) / pow(dist, 2);
 }
 
+double Fx(Entity e1, Entity e2)
+{
+    double x1 = e1.getPoint().getX(), x2 = e2.getPoint().getX();
+    double r = distance(e1, e2);
+    double f = F(e1, e2);
+
+    return f * (x2 - x1) / r;
+}
+
+double Fy(Entity e1, Entity e2)
+{
+    double y1 = e1.getPoint().getY(), y2 = e2.getPoint().getY();
+    double r = distance(e1, e2);
+    double f = F(e1, e2);
+
+    return f * (y2 - y1) / r;
+}
+
 void printBHTreeUtil(BHTree *curr)
 {
     Entity *e;
@@ -161,6 +301,20 @@ void printBHTree(BHTree *curr)
     }
     std::cout << "-------------------------------------------\n";
     std::cout << "Printing BHTree containing " << curr->getTotalEntities().size() << " entities\n";
+    std::cout << "The mass center of the system is at: " << curr->getEntity()->getPoint().toString() << " with total mass " << curr->getEntity()->getMass() << "\n";
     printBHTreeUtil(curr);
     std::cout << "-------------------------------------------\n";
+}
+
+bool containsPoint(vector<Entity *> entities, Entity *en)
+{
+    for (Entity *e : entities)
+    {
+        if (e == en)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
