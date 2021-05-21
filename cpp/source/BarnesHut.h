@@ -61,8 +61,6 @@ private:
     std::string name;
     Point point;
 
-    std::vector<Entity> interactingEntities;
-
 public:
     Entity(Point _point, std::string _name, double _Vx, double _Vy, double _mass) : point{_point}, name{_name}, Vx{_Vx}, Vy{_Vy}, mass{_mass} {}
 
@@ -136,21 +134,6 @@ public:
         return name;
     }
 
-    std::vector<Entity> getInteractingEntities()
-    {
-        return interactingEntities;
-    }
-
-    void clearInteractionEntities()
-    {
-        interactingEntities.clear();
-    }
-
-    void addInteractionEntity(Entity en)
-    {
-        interactingEntities.push_back(en);
-    }
-
     std::string toString()
     {
         std::string output;
@@ -162,6 +145,16 @@ public:
         return output;
     }
 };
+
+Entity *massCenter(Entity *e1, Entity *e2)
+{
+    double centerX, centerY, mass = e1->getMass() + e2->getMass();
+
+    centerX = ((e1->getPoint().getX() * e1->getMass()) + (e2->getPoint().getX() * e2->getMass())) / mass;
+    centerY = ((e1->getPoint().getY() * e1->getMass()) + (e2->getPoint().getY() * e2->getMass())) / mass;
+
+    return new Entity(Point(centerX, centerY), "Mass Center", 0, 0, mass);
+}
 
 class Region
 {
@@ -198,7 +191,6 @@ public:
         std::string str;
         double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
         double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
-        //str += center.toString() + " " + std::to_string(dimension) + "]";
         str = "x:[" + std::to_string(xStart) + "," + std::to_string(xEnd) + "] y:[" + std::to_string(yStart) + "," + std::to_string(yEnd) + "]";
         return str;
     }
@@ -209,8 +201,6 @@ class BHTree
 private:
     Region region;
 
-    std::vector<Entity *> totalEntities;
-
     Entity *entity = NULL; //When the current node is not leaf, this entity represents the mass center of the region
 
     BHTree *quad1 = NULL;
@@ -220,11 +210,6 @@ private:
 
 public:
     BHTree(Region _region) : region{_region} { std::cout << "Created BHTree in region: " << region.toString() << "\n"; }
-
-    std::vector<Entity *> getTotalEntities()
-    {
-        return totalEntities;
-    }
 
     BHTree *getQuad1()
     {
@@ -277,10 +262,8 @@ public:
 
     bool insertEntity(Entity *_entity)
     {
-
         if (!region.containsPoint(_entity->getPoint()))
         {
-            //std::cout << "Entity out of range!\n";
             return false;
         }
 
@@ -289,10 +272,8 @@ public:
             //empty leaf case
             if (entity == NULL)
             {
-                //std::cout << "Inserted to empty leaf\n";
                 std::cout << "Insert entity " << _entity->getName() << " to empty leaf in the region " << region.toString() << ".\n";
                 entity = _entity;
-                totalEntities.push_back(_entity);
                 return true;
             }
 
@@ -315,8 +296,6 @@ public:
                 quad3->insertEntity(entity) ||
                 quad4->insertEntity(entity))
             {
-                //totalEntities.push_back(entity);
-                entity = NULL;
             }
             else
             {
@@ -329,9 +308,7 @@ public:
             quad3->insertEntity(_entity) ||
             quad4->insertEntity(_entity))
         {
-            totalEntities.push_back(_entity);
-            //calculate mass center
-            entity = calcRegionMassCenterEntity();
+            entity = massCenter(entity, _entity);
             return true;
         }
         else
@@ -340,33 +317,5 @@ public:
         }
 
         return false;
-    }
-
-    double calcTotalMass()
-    {
-        double m = 0;
-        for (Entity *e : totalEntities)
-        {
-            m += e->getMass();
-        }
-        return m;
-    }
-
-    Entity *calcRegionMassCenterEntity()
-    {
-        double totMass = calcTotalMass();
-        double totCenterX = 0;
-        double totCenterY = 0;
-
-        for (Entity *e : totalEntities)
-        {
-            totCenterX += e->getMass() * e->getPoint().getX();
-            totCenterY += e->getMass() * e->getPoint().getY();
-        }
-
-        totCenterX = totCenterX / totMass;
-        totCenterY = totCenterY / totMass;
-
-        return new Entity(Point(totCenterX, totCenterY), "MassCR", 0, 0, totMass);
     }
 };

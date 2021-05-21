@@ -30,10 +30,7 @@ int main(int argc, char **argv)
     dims = loadEntities("./../../datasets/input1.txt", entities);
     printEntities(entities);
 
-    //bh = createBHTree(entities, dims);
-    //printBHTree(bh);
-
-    BarnesHut(entities, dims, 10000, 1);
+    BarnesHut(entities, dims, 1, 1);
 
     return 0;
 }
@@ -60,6 +57,8 @@ void BarnesHut(vector<Entity *> &entities, double dims, int iterations, int dt)
     }
 
     printEntities(entities);
+    //bh = createBHTree(entities, dims);
+    //printBHTree(bh);
 }
 
 void updateNetForceData(Entity *e, BHTree *bh)
@@ -92,10 +91,10 @@ void updateNetForceData(Entity *e, BHTree *bh)
                 continue;
             }
 
-            vector<Entity *> entitiesOfRegion = quads[i]->getTotalEntities();
+            //vector<Entity *> entitiesOfRegion = quads[i]->getTotalEntities();
 
             //ContainsPoint is really slow.. =>optimize?
-            //if (  containsPoint(entitiesOfRegion, e))
+            //if (containsPoint(entitiesOfRegion, e))
             if (!pathFound && reg.containsPoint(e->getPoint()))
             {
                 cout << "Found the region that body " << e->getName() << " belongs. Going to squad[ " << i << " ]\n";
@@ -117,7 +116,7 @@ void updateNetForceData(Entity *e, BHTree *bh)
     }
 
     //fix;
-    //assert(quadToGo);
+    assert(quadToGo);
     updateNetForceData(e, quadToGo);
 }
 
@@ -148,6 +147,8 @@ void calcNewPos(Entity *e, double dt)
 
     e->setVx(newVx);
     e->setVy(newVy);
+
+    //return isInsideUniverse(e, )
 }
 
 BHTree *createBHTree(vector<Entity *> entities, double dims)
@@ -224,16 +225,6 @@ double loadEntities(string dataset, vector<Entity *> &entities)
     return dims;
 }
 
-Point massCenter(Entity e1, Entity e2)
-{
-    double centerX, centerY, mass = e1.getMass() + e2.getMass();
-
-    centerX = ((e1.getPoint().getX() * e1.getMass()) + (e2.getPoint().getX() * e2.getMass())) / mass;
-    centerY = ((e1.getPoint().getY() * e1.getMass()) + (e2.getPoint().getY() * e2.getMass())) / mass;
-
-    return Point(centerX, centerY);
-}
-
 double distance(Entity e1, Entity e2)
 {
     double x1 = e1.getPoint().getX();
@@ -300,11 +291,13 @@ void printBHTree(BHTree *curr)
         return;
     }
     std::cout << "-------------------------------------------\n";
-    std::cout << "Printing BHTree containing " << curr->getTotalEntities().size() << " entities\n";
+    //std::cout << "Printing BHTree containing " << curr->getTotalEntities().size() << " entities\n";
     std::cout << "The mass center of the system is at: " << curr->getEntity()->getPoint().toString() << " with total mass " << curr->getEntity()->getMass() << "\n";
     printBHTreeUtil(curr);
     std::cout << "-------------------------------------------\n";
 }
+
+bool isInsideUniverse(Entity *en, double dim);
 
 bool containsPoint(vector<Entity *> entities, Entity *en)
 {
