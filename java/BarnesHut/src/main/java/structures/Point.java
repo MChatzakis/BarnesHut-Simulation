@@ -5,6 +5,7 @@
  */
 package structures;
 
+import java.text.DecimalFormat;
 import lombok.Data;
 
 /**
@@ -23,6 +24,11 @@ public class Point {
     }
 
     public String toString() {
-        return "(" + x + "," + y + ")";
+
+        DecimalFormat format = new DecimalFormat();
+        format.setMaximumFractionDigits(6);
+        String xAp = format.format(x);
+        String yAp = format.format(y);
+        return "(" + xAp + "," + yAp + ")";
     }
 }

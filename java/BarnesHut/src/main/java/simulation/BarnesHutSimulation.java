@@ -15,7 +15,7 @@ import utilCommons.Utils;
  * @author manos
  */
 @Data
-public class BarnesHut {
+public class BarnesHutSimulation {
 
     private ArrayList<Entity> entities = new ArrayList<>();
 
@@ -23,11 +23,7 @@ public class BarnesHut {
     private double dt = 1;
     private double dims = 0;
 
-    public static void main(String[] args) {
-        new BarnesHut(1, 1, "./../../datasets/input1.txt").runSimulation();
-    }
-
-    public BarnesHut(int dt, int iters, String dataset) {
+    public BarnesHutSimulation(int dt, int iters, String dataset) {
         this.dims = Utils.parseFile(dataset, this.entities);
         this.dt = dt;
         this.iters = iters;
@@ -148,5 +144,6 @@ public class BarnesHut {
         e.setVx(newVx);
         e.setVy(newVy);
 
+        //entities.remove(e);
     }
 }

@@ -5,6 +5,7 @@
  */
 package structures;
 
+import java.text.DecimalFormat;
 import lombok.Data;
 
 /**
@@ -42,7 +43,15 @@ public class Entity {
     }
 
     public String toString() {
-        return this.name + ": " + point.toString() + " " + Vx + " " + Vy + " " + mass;
+
+        DecimalFormat format = new DecimalFormat();
+        format.setMaximumFractionDigits(6);
+
+        String VxAp = format.format(Vx);
+        String VyAp = format.format(Vy);
+        String massAp = format.format(mass);
+
+        return this.name + ": " + point.toString() + " " + VxAp + " " + VyAp + " " + massAp;
     }
 
     public static Entity massCenter(Entity e1, Entity e2) {
@@ -86,6 +95,5 @@ public class Entity {
 
         return f * (y2 - y1) / r;
     }
-    
-    
+
 }
