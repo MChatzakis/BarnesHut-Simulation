@@ -2,8 +2,10 @@
 #include <cmath>
 #include <iostream>
 
+#include "tbb/parallel_for.h"
 #include "BarnesHut.h"
 
+using namespace tbb;
 using namespace std;
 
 BHTree *createBHTree(vector<Entity *> entities, double dims);
