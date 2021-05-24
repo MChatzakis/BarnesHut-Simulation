@@ -209,7 +209,10 @@ private:
     BHTree *quad4 = NULL;
 
 public:
-    BHTree(Region _region) : region{_region} { std::cout << "Created BHTree in region: " << region.toString() << "\n"; }
+    BHTree(Region _region) : region{_region}
+    {
+        //std::cout << "Created BHTree in region: " << region.toString() << "\n";
+    }
 
     BHTree *getQuad1()
     {
@@ -245,14 +248,14 @@ public:
     {
         double xCenter = region.getCenter().getX(), yCenter = region.getCenter().getY(), dim = region.getDimension();
 
-        std::cout << "---------------- Creating sub quads ----------------\n";
+        //std::cout << "---------------- Creating sub quads ----------------\n";
 
         quad1 = new BHTree(Region(Point(xCenter + dim / 2, yCenter + dim / 2), dim / 2));
         quad2 = new BHTree(Region(Point(xCenter - dim / 2, yCenter + dim / 2), dim / 2));
         quad3 = new BHTree(Region(Point(xCenter - dim / 2, yCenter - dim / 2), dim / 2));
         quad4 = new BHTree(Region(Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2));
 
-        std::cout << "----------------   Creating ended   ----------------\n";
+        //std::cout << "----------------   Creating ended   ----------------\n";
     }
 
     bool isLeaf()
@@ -272,7 +275,7 @@ public:
             //empty leaf case
             if (entity == NULL)
             {
-                std::cout << "Insert entity " << _entity->getName() << " to empty leaf in the region " << region.toString() << ".\n";
+                //std::cout << "Insert entity " << _entity->getName() << " to empty leaf in the region " << region.toString() << ".\n";
                 entity = _entity;
                 return true;
             }
@@ -280,7 +283,7 @@ public:
             if (entity->getPoint().getX() == _entity->getPoint().getX() &&
                 entity->getPoint().getY() == _entity->getPoint().getY())
             {
-                std::cout << "Colision detected -- Patching the points\n";
+                //std::cout << "Colision detected -- Patching the points\n";
 
                 double dx = 0.01;
                 double dy = 0.01;

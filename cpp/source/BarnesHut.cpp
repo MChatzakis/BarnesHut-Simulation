@@ -1,10 +1,20 @@
 #include <fstream>
 #include <cmath>
 #include <iostream>
+#include <string>
+#include <chrono>
 
-#include "tbb/parallel_for.h"
+#include <unistd.h>
+
+//#include "tbb/parallel_for.h"
+//#include "tbb/task_scheduler_init.h>
+#include "tbb/tbb.h"
+
 #include "BarnesHut.h"
 
+#pragma warning(disable : 588)
+
+using namespace std::chrono;
 using namespace tbb;
 using namespace std;
 
@@ -18,26 +28,84 @@ double Fx(Entity e1, Entity e2);
 void printEntities(vector<Entity *> entities);
 void printBHTreeUtil(BHTree *curr);
 void printBHTree(BHTree *curr);
-void BarnesHut(vector<Entity *> &entities, double dims, int iterations, int dt);
+
+void printEntitiesToFile(string filename, vector<Entity *> entities);
+void appendTimeMeasurementsToFile(string filename, double time);
+
+void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int dt);
+void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int threads, int dt);
+
 void updateNetForceData(Entity *e, BHTree *bh);
-void calcNewPos(Entity *e, double dt);
+void calcNewPos(Entity *e, double dt, double dims);
 
 bool containsPoint(vector<Entity *> entities, Entity *en);
 
 int main(int argc, char **argv)
 {
+
     vector<Entity *> entities;
     double dims;
+    int opt, iters, threads, printTime = 0;
+    string filename;
+
+    while ((opt = getopt(argc, argv, "f:i:t:mh")) != -1)
+    {
+        switch (opt)
+        {
+        case 'f':
+            filename = string(optarg);
+            cout << "Selected filename is " << filename << ".\n";
+            break;
+        case 'i':
+            iters = stoi(optarg);
+            cout << "Selected number of iterations is " << iters << ".\n";
+            break;
+        case 't':
+            threads = stoi(optarg);
+            cout << "Selected number of threads is " << threads << ".\n";
+            break;
+        case 'm':
+            printTime = 1;
+            cout << "Execution time will be printed.\n";
+            break;
+        case 'h':
+            break;
+        }
+    }
 
     dims = loadEntities("./../../datasets/input1.txt", entities);
-    printEntities(entities);
 
-    BarnesHut(entities, dims, 1, 1);
+    //printEntities(entities);
+
+    auto start = high_resolution_clock::now();
+
+    if (threads == 0)
+    {
+        BarnesHutSeq(entities, dims, iters, 1);
+    }
+    else
+    {
+        BarnesHutPar(entities, dims, iters, threads, 1);
+    }
+
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(end - start);
+
+    //printEntities(entities);
+
+    if (printTime)
+    {
+        double seconds = duration.count() * 0.001;
+        cout << "Execution time: " << seconds << " seconds.\n";
+        appendTimeMeasurementsToFile("timeMesCPP.txt", seconds);
+    }
+
+    printEntitiesToFile("simulationCPP.txt", entities);
 
     return 0;
 }
 
-void BarnesHut(vector<Entity *> &entities, double dims, int iterations, int dt)
+void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int dt)
 {
     BHTree *bh;
 
@@ -50,17 +118,53 @@ void BarnesHut(vector<Entity *> &entities, double dims, int iterations, int dt)
             updateNetForceData(e, bh);
         }
 
-        // -- Barrier --
-
         for (Entity *e : entities)
         {
-            calcNewPos(e, dt);
+            calcNewPos(e, dt, dims);
         }
+
+        cout << "Iteration " << i + 1 << "\n";
+    }
+}
+
+void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int threads, int dt)
+{
+    BHTree *bh;
+    size_t size = entities.size();
+    size_t grainSize = size / threads;
+
+    task_scheduler_init init(threads);
+
+    for (int i = 0; i < iterations; i++)
+    {
+        bh = createBHTree(entities, dims);
+
+        parallel_for(blocked_range<size_t>(0, size),
+                     [&](const blocked_range<size_t> &r) -> void
+                     {
+                         for (size_t i = r.begin(); i != r.end(); i++)
+                         {
+                             updateNetForceData(entities[i], bh);
+                         }
+                         //cout << "Thread operates inside lambda\n";
+                     });
+
+        //wait_for_all();
+        //cout << "All threads ended\n";
+
+        parallel_for(blocked_range<size_t>(0, size),
+                     [&](const blocked_range<size_t> &r) -> void
+                     {
+                         for (size_t i = r.begin(); i != r.end(); i++)
+                         {
+                             calcNewPos(entities[i], dt, dims);
+                         }
+                     });
+
+        //cout << "Iteration " << i + 1 << "\n";
     }
 
-    printEntities(entities);
-    //bh = createBHTree(entities, dims);
-    //printBHTree(bh);
+    //printEntities(entities);
 }
 
 void updateNetForceData(Entity *e, BHTree *bh)
@@ -99,14 +203,14 @@ void updateNetForceData(Entity *e, BHTree *bh)
             //if (containsPoint(entitiesOfRegion, e))
             if (!pathFound && reg.containsPoint(e->getPoint()))
             {
-                cout << "Found the region that body " << e->getName() << " belongs. Going to squad[ " << i << " ]\n";
+                //cout << "Found the region that body " << e->getName() << " belongs. Going to squad[ " << i << " ]\n";
                 quadToGo = quads[i];
 
                 pathFound = true;
             }
             else
             {
-                cout << "Calculating net force for body " << e->toString() << " by body " << cent->toString() << "\n";
+                //cout << "Calculating net force for body " << e->toString() << " by body " << cent->toString() << "\n";
 
                 double fx = Fx(*cent, *e);
                 double fy = Fy(*cent, *e);
@@ -122,7 +226,7 @@ void updateNetForceData(Entity *e, BHTree *bh)
     updateNetForceData(e, quadToGo);
 }
 
-void calcNewPos(Entity *e, double dt)
+void calcNewPos(Entity *e, double dt, double dims)
 {
     double SFy = e->getSFy();
     double SFx = e->getSFx();
@@ -142,6 +246,26 @@ void calcNewPos(Entity *e, double dt)
     double newX = oldX + newVx * dt;
     double newY = oldY + newVy * dt;
 
+    if (newX > dims)
+    {
+        newX = dims;
+    }
+
+    if (newX < -dims)
+    {
+        newX = -dims;
+    }
+
+    if (newY > dims)
+    {
+        newY = dims;
+    }
+
+    if (newY < -dims)
+    {
+        newY = -dims;
+    }
+
     e->setPoint(Point(newX, newY));
 
     e->setSFx(0);
@@ -149,8 +273,6 @@ void calcNewPos(Entity *e, double dt)
 
     e->setVx(newVx);
     e->setVy(newVy);
-
-    //return isInsideUniverse(e, )
 }
 
 BHTree *createBHTree(vector<Entity *> entities, double dims)
@@ -299,17 +421,32 @@ void printBHTree(BHTree *curr)
     std::cout << "-------------------------------------------\n";
 }
 
-bool isInsideUniverse(Entity *en, double dim);
-
-bool containsPoint(vector<Entity *> entities, Entity *en)
+void printEntitiesToFile(string filename, vector<Entity *> entities)
 {
+    ofstream outfile;
+
+    outfile.open(filename); //, std::ios_base::app); // append instead of overwrite
+
     for (Entity *e : entities)
     {
-        if (e == en)
-        {
-            return true;
-        }
+        double X = e->getPoint().getX();
+        double Y = e->getPoint().getY();
+        double M = e->getMass();
+        double Vy = e->getVy();
+        double Vx = e->getVx();
+        string S = e->getName();
+
+        outfile << X << " " << Y << " " << Vx << " " << Vy << " " << M << " " << S << endl;
     }
 
-    return false;
+    outfile.close();
+}
+
+void appendTimeMeasurementsToFile(string filename, double time)
+{
+    ofstream outfile;
+
+    outfile.open(filename, std::ios_base::app); // append instead of overwrite
+
+    outfile << time << endl;
 }

@@ -1,5 +1,5 @@
 CC = g++
-CC_FLAGS = -std=c++0x -o
+CC_FLAGS = -std=c++0x -pthread -ltbb -o 
 
 MAIN = ./../source/BarnesHut.cpp
 LIB = ./../source/BarnesHut.h
@@ -13,3 +13,5 @@ g++: $(LIB)
 
 clean: 
 	rm -rf $(NAME)	
+	rm -rf simulationCPP.txt
+	rm -rf timeMesCPP.txt
