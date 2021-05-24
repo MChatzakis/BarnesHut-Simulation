@@ -54,26 +54,26 @@ int main(int argc, char **argv)
         {
         case 'f':
             filename = string(optarg);
-            cout << "Selected filename is " << filename << ".\n";
+            //cout << "Selected filename is " << filename << ".\n";
             break;
         case 'i':
             iters = stoi(optarg);
-            cout << "Selected number of iterations is " << iters << ".\n";
+            //cout << "Selected number of iterations is " << iters << ".\n";
             break;
         case 't':
             threads = stoi(optarg);
-            cout << "Selected number of threads is " << threads << ".\n";
+            //cout << "Selected number of threads is " << threads << ".\n";
             break;
         case 'm':
             printTime = 1;
-            cout << "Execution time will be printed.\n";
+            //cout << "Execution time will be printed.\n";
             break;
         case 'h':
             break;
         }
     }
 
-    dims = loadEntities("./../../datasets/input1.txt", entities);
+    dims = loadEntities(filename, entities);
 
     //printEntities(entities);
 
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     {
         double seconds = duration.count() * 0.001;
         cout << "Execution time: " << seconds << " seconds.\n";
-        appendTimeMeasurementsToFile("timeMesCPP.txt", seconds);
+        appendTimeMeasurementsToFile("timesCPP.txt", seconds);
     }
 
     printEntitiesToFile("simulationCPP.txt", entities);
@@ -309,7 +309,7 @@ double loadEntities(string dataset, vector<Entity *> &entities)
         exit(EXIT_FAILURE);
     }
 
-    cout << "--- Starting parsing file\n";
+    //cout << "--- Starting parsing file\n";
 
     if (input_file >> totalEntities)
     {
@@ -345,7 +345,7 @@ double loadEntities(string dataset, vector<Entity *> &entities)
 
     input_file.close();
 
-    cout << "--- Done parsing file\n";
+    //cout << "--- Done parsing file\n";
     return dims;
 }
 
