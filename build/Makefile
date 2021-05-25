@@ -10,7 +10,7 @@ JAVA_DIR =  ./../src/java/
 CPP_NAME = bhCPP
 JAVA_NAME = BarnesHutMain
 
-all: g++
+all: g++ java
 
 g++: $(CPP_LIB) $(CPP_MAIN)
 	$(CC) $(CPP_MAIN) $(CC_FLAGS) $(CPP_NAME) 
