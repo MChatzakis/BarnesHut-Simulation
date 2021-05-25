@@ -6,12 +6,17 @@ import copy
 import math
 
 tests = 5
-datasets = ["./../../datasets/input5.txt"]  # , "./../../datasets/input2.txt",
+datasets = ["./../datasets/input5.txt","./../datasets/input2.txt"]
 # "./../../datasets/input3.txt", "./../../datasets/input4.txt", "./../../datasets/input5.txt"]
-threads = [0, 4]
-iterations = [30, 100]
+threads = [0,1,2,4]
+iterations = [30, 100, 200]
 
 tex = open("tables.tex", "w+")
+
+#compile all before start
+print("Compiling")
+make = subprocess.getoutput("make")
+print(make)
 
 # Parallelism Measuerements
 tex.write("\subsection*{4.1 C++ Implementation}")
@@ -94,10 +99,10 @@ for i in range(len(datasets)):
         tex.write("\end{tabular} \end{adjustbox} \end{center}")
     tex.write("\end{itemize}")
 
+tex.write("\subsection*{4.2 Java Implementation}")
 
 tex.close()
 print("Total Runs:", len(datasets) * len(iterations) * len(threads) * tests)
-
 
 print("Cleaning...")
 make = subprocess.getoutput("make clean")
