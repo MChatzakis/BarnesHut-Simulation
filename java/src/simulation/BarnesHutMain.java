@@ -47,6 +47,7 @@ public class BarnesHutMain {
     //System.out.println("Execution time 3: " + (double) TE * 0.001);
 
     BHUtils.printEntities(entities, "simulationJAVA.txt");
+    BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
   public static void BarnesHutParallel(
@@ -102,7 +103,7 @@ public class BarnesHutMain {
         BHUtils.newPosition(e, dt);
       }
 
-      System.out.println("Iteration: " + (i + 1));
+      //System.out.println("Iteration: " + (i + 1));
     }
   }
 }

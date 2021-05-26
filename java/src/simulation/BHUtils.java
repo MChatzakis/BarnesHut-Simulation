@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -198,5 +199,15 @@ public class BHUtils {
       System.out.println("An error occurred.");
       e.printStackTrace();
     }
+  }
+
+  public static void appendToFile(String filename, double time) {
+    try {
+      FileWriter fw = new FileWriter(filename, true);
+      BufferedWriter bw = new BufferedWriter(fw);
+      bw.write(time + "\n");
+      //bw.newLine();
+      bw.close();
+    } catch (Exception e) {}
   }
 }

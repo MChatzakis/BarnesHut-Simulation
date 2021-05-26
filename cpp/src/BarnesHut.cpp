@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(end - start);
 
-    //printEntities(entities);
+    printEntities(entities);
 
     if (printTime)
     {
