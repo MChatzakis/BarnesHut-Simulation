@@ -5,7 +5,7 @@ import structures.*;
 
 public class BarnesHutMain {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws InterruptedException {
     long start = System.currentTimeMillis();
     long startTime = System.nanoTime();
 
@@ -53,9 +53,37 @@ public class BarnesHutMain {
     ArrayList<Entity> entities,
     int iters,
     double dims,
-    int threads,
+    int threadsNum,
     int dt
-  ) {}
+  )
+    throws InterruptedException {
+    Thread[] threads = new Thread[threadsNum];
+
+    int sets = entities.size() / threadsNum;
+
+    for (int i = 0; i < threads.length; i++) {
+      int to;
+      int from = i * sets;
+
+      if (i != threadsNum - 1) {
+        to = (i + 1) * sets;
+      } else {
+        to = entities.size();
+      }
+
+      threads[i] =
+        new Thread(
+          new BHRunnable(entities, from, to, iters, dt, dims),
+          "thread" + (i + 1)
+        );
+      threads[i].start();
+    }
+
+    //doing shit....
+    for (int i = 0; i < threads.length; i++) {
+      threads[i].join();
+    }
+  }
 
   public static void BarnesHutSequential(
     ArrayList<Entity> entities,
@@ -73,6 +101,8 @@ public class BarnesHutMain {
       for (Entity e : entities) {
         BHUtils.newPosition(e, dt);
       }
+
+      System.out.println("Iteration: " + (i + 1));
     }
   }
 }
