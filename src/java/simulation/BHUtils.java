@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -111,5 +113,90 @@ public class BHUtils {
     e.setVx(newVx);
     e.setVy(newVy);
     //entities.remove(e);
+  }
+
+  public static void netForce(Entity e, BHTree bh) {
+    if (e == null) {
+      return;
+    }
+
+    if (bh.isLeaf()) {
+      assert (e.equals(bh.getEntity()));
+      return;
+    }
+
+    boolean pathFound = false;
+
+    BHTree[] quads = {
+      bh.getQuad1(),
+      bh.getQuad2(),
+      bh.getQuad3(),
+      bh.getQuad4(),
+    };
+    BHTree quadToGo = null;
+
+    for (int i = 0; i < 4; i++) {
+      if (quads[i] != null) {
+        Region reg = quads[i].getRegion();
+        Entity curr = quads[i].getEntity();
+
+        if (curr != null) {
+          if (!pathFound && reg.containsPoint(e.getPoint())) {
+            /*System.out.println(
+              "Found the region that body " +
+              e.getName() +
+              " belongs. Going to quad[ " +
+              i +
+              " ]"
+            );*/
+
+            quadToGo = quads[i];
+            pathFound = true;
+          } else {
+            /*System.out.println(
+              "Calculating net force for body " +
+              e.toString() +
+              " by body " +
+              curr.toString()
+            );*/
+
+            double f = Entity.F(curr, e);
+            double fx = Entity.Fx(curr, e, f);
+            double fy = Entity.Fy(curr, e, f);
+
+            e.addToSFx(fx);
+            e.addToSFy(fy);
+          }
+        }
+      }
+    }
+
+    assert (quadToGo != null);
+    netForce(e, quadToGo);
+  }
+
+  public static void printEntities(
+    ArrayList<Entity> entities,
+    String filename
+  ) {
+    try {
+      FileWriter wr = new FileWriter(filename);
+
+      for (Entity e : entities) {
+        double X = e.getPoint().getX();
+        double Y = e.getPoint().getY();
+        double Vx = e.getVx();
+        double Vy = e.getVy();
+        double M = e.getMass();
+        String S = e.getName();
+
+        wr.write(X + " " + Y + " " + Vx + " " + Vy + " " + M + " " + S + "\n");
+      }
+
+      wr.close();
+    } catch (IOException e) {
+      System.out.println("An error occurred.");
+      e.printStackTrace();
+    }
   }
 }

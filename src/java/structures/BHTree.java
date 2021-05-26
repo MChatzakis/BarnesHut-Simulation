@@ -15,7 +15,7 @@ public class BHTree {
 
   public BHTree(Region region) {
     this.region = region;
-    System.out.println("Created BHTree in region: " + region.toString());
+    //System.out.println("Created BHTree in region: " + region.toString());
   }
 
   private void createSubQuads() {
@@ -23,7 +23,7 @@ public class BHTree {
       .getCenter()
       .getY(), dim = region.getDimension();
 
-    System.out.println("---------------- Creating sub quads ----------------");
+    //System.out.println("---------------- Creating sub quads ----------------");
 
     quad1 =
       new BHTree(
@@ -41,8 +41,7 @@ public class BHTree {
       new BHTree(
         new Region(new Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2)
       );
-
-    System.out.println("----------------   Creating ended   ----------------");
+    //System.out.println("----------------   Creating ended   ----------------");
   }
 
   public boolean isLeaf() {
@@ -57,12 +56,12 @@ public class BHTree {
     if (isLeaf()) {
       //empty leaf case
       if (entity == null) {
-        System.out.println(
+        /*System.out.println(
           "Insert entity " +
           _entity.getName() +
           " to empty leaf in the region " +
           region.toString()
-        );
+        );*/
         entity = _entity;
         totalEntities++;
         return true;

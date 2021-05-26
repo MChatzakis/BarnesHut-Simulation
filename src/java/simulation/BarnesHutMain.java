@@ -6,9 +6,13 @@ import structures.*;
 public class BarnesHutMain {
 
   public static void main(String[] args) {
+    long start = System.currentTimeMillis();
+    long startTime = System.nanoTime();
+
     String filename = args[0];
     int iters = Integer.parseInt(args[1]);
     int threads = Integer.parseInt(args[2]);
+    int dt = 1;
 
     System.out.println("Filename: " + filename);
     System.out.println("Iterations: " + iters);
@@ -17,17 +21,58 @@ public class BarnesHutMain {
     ArrayList<Entity> entities = new ArrayList<>();
     double dims = BHUtils.parseFile(filename, entities);
 
-    long start = System.currentTimeMillis();
+    //Instant start = Instant.now();
 
     if (threads == 0) {
-      //seq
+      BarnesHutSequential(entities, iters, dims, dt);
     } else {
       //par
+      //BarnesHutParallel(entities,iters,dims,threads,dt);
     }
 
+    //Instant finish = Instant.now();
+    //long TE = Duration.between(start, finish).toMillis();
+
+    long estimatedTime = System.nanoTime() - startTime;
     long finish = System.currentTimeMillis();
     long timeElapsed = finish - start;
 
-    System.out.println("Execution time: " + timeElapsed);
+    //BHUtils.printEntities(entities);
+
+    System.out.println(
+      "Execution time 1: " + (double) estimatedTime / 1000000000
+    );
+
+    System.out.println("Execution time 2: " + (double) timeElapsed * 0.001);
+    //System.out.println("Execution time 3: " + (double) TE * 0.001);
+
+    BHUtils.printEntities(entities, "simulationJAVA.txt");
+  }
+
+  public static void BarnesHutParallel(
+    ArrayList<Entity> entities,
+    int iters,
+    double dims,
+    int threads,
+    int dt
+  ) {}
+
+  public static void BarnesHutSequential(
+    ArrayList<Entity> entities,
+    int iters,
+    double dims,
+    int dt
+  ) {
+    for (int i = 0; i < iters; i++) {
+      BHTree bh = BHUtils.createBHTree(entities, dims);
+
+      for (Entity e : entities) {
+        BHUtils.netForce(e, bh);
+      }
+
+      for (Entity e : entities) {
+        BHUtils.newPosition(e, dt);
+      }
+    }
   }
 }

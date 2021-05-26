@@ -18,17 +18,14 @@ g++: $(CPP_LIB) $(CPP_MAIN)
 java: $(JAVA_MAIN)
 	javac -d ./ $(JAVA_DIR)simulation/*.java $(JAVA_DIR)structures/*.java 
 
-cleanAll: 
-	rm -rf $(CPP_NAME)
-	
-	rm -rf simulationCPP.txt
-	rm -rf timeMesCPP.txt
+cleanAll: clean
 	rm -rf tables.tex
 
 clean: 
 	rm -rf $(CPP_NAME)	
 	rm -rf simulationCPP.txt
-	rm -rf timeMesCPP.txt
+	rm -rf simulationJAVA.txt
+	rm -rf timesCPP.txt
 	rm -rf *.class	
 	rm -rf simulation/*.class
 	rm -rf simulation

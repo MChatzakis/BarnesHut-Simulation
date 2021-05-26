@@ -123,7 +123,7 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
             calcNewPos(e, dt, dims);
         }
 
-        //cout << "Iteration " << i + 1 << "\n";
+        cout << "Iteration " << i + 1 << "\n";
     }
 }
 
