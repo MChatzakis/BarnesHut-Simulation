@@ -106,14 +106,16 @@ public class BHUtils {
     double newX = oldX + newVx * dt;
     double newY = oldY + newVy * dt;
 
+    //add patch
+
     e.setPoint(new Point(newX, newY));
 
+    //??
     e.setSFx(0.0);
     e.setSFy(0.0);
 
     e.setVx(newVx);
     e.setVy(newVy);
-    //entities.remove(e);
   }
 
   public static void netForce(Entity e, BHTree bh) {
@@ -128,12 +130,7 @@ public class BHUtils {
 
     boolean pathFound = false;
 
-    BHTree[] quads = {
-      bh.getQuad1(),
-      bh.getQuad2(),
-      bh.getQuad3(),
-      bh.getQuad4(),
-    };
+    BHTree[] quads = { bh.getQuad1(), bh.getQuad2(), bh.getQuad3(), bh.getQuad4(), };
     BHTree quadToGo = null;
 
     for (int i = 0; i < 4; i++) {
@@ -143,23 +140,18 @@ public class BHUtils {
 
         if (curr != null) {
           if (!pathFound && reg.containsPoint(e.getPoint())) {
-            /*System.out.println(
-              "Found the region that body " +
-              e.getName() +
-              " belongs. Going to quad[ " +
-              i +
-              " ]"
-            );*/
+            /*
+             * System.out.println( "Found the region that body " + e.getName() +
+             * " belongs. Going to quad[ " + i + " ]" );
+             */
 
             quadToGo = quads[i];
             pathFound = true;
           } else {
-            /*System.out.println(
-              "Calculating net force for body " +
-              e.toString() +
-              " by body " +
-              curr.toString()
-            );*/
+            /*
+             * System.out.println( "Calculating net force for body " + e.toString() +
+             * " by body " + curr.toString() );
+             */
 
             double f = Entity.F(curr, e);
             double fx = Entity.Fx(curr, e, f);
@@ -176,10 +168,7 @@ public class BHUtils {
     netForce(e, quadToGo);
   }
 
-  public static void printEntities(
-    ArrayList<Entity> entities,
-    String filename
-  ) {
+  public static void printEntities(ArrayList<Entity> entities, String filename) {
     try {
       FileWriter wr = new FileWriter(filename);
 
@@ -206,8 +195,9 @@ public class BHUtils {
       FileWriter fw = new FileWriter(filename, true);
       BufferedWriter bw = new BufferedWriter(fw);
       bw.write(time + "\n");
-      //bw.newLine();
+      // bw.newLine();
       bw.close();
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
   }
 }

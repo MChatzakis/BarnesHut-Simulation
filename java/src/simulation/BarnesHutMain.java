@@ -13,13 +13,18 @@ import structures.*;
 public class BarnesHutMain {
 
   public static void main(String[] args) throws InterruptedException {
-    long start = System.currentTimeMillis();
     long startTime = System.nanoTime();
 
     String filename = args[0];
     int iters = Integer.parseInt(args[1]);
     int threads = Integer.parseInt(args[2]);
+    
     int dt = 1;
+    boolean runAsStream = false;
+
+    if (args.length == 4 && args[4].equals("stream")) {
+      runAsStream = true;
+    }
 
     System.out.println("Filename: " + filename);
     System.out.println("Iterations: " + iters);
@@ -28,80 +33,48 @@ public class BarnesHutMain {
     ArrayList<Entity> entities = new ArrayList<>();
     double dims = BHUtils.parseFile(filename, entities);
 
-    //Instant start = Instant.now();
+    long start = System.currentTimeMillis();
 
-    if (threads == 0) {
-      BarnesHutSequential(entities, iters, dims, dt);
-    } else {
-      //par
-      //BarnesHutParallel(entities, iters, dims, threads, dt);
+    if (runAsStream) {
       BarnesHutStream(entities, iters, dims, threads, dt);
     }
-
-    //Instant finish = Instant.now();
-    //long TE = Duration.between(start, finish).toMillis();
+    else if (threads == 0) {
+      BarnesHutSequential(entities, iters, dims, dt);
+    } else {
+      BarnesHutParallel(entities, iters, dims, threads, dt);
+    }
 
     long estimatedTime = System.nanoTime() - startTime;
     long finish = System.currentTimeMillis();
     long timeElapsed = finish - start;
 
-    //BHUtils.printEntities(entities);
+    // BHUtils.printEntities(entities);
 
-    System.out.println(
-      "Execution time 1: " + (double) estimatedTime / 1000000000
-    );
-
+    System.out.println("Execution time 1: " + (double) estimatedTime / 1000000000);
     System.out.println("Execution time 2: " + (double) timeElapsed * 0.001);
-    //System.out.println("Execution time 3: " + (double) TE * 0.001);
 
     BHUtils.printEntities(entities, "simulationJAVA.txt");
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
-  public static void BarnesHutStream(
-    ArrayList<Entity> entities,
-    int iters,
-    double dims,
-    int threadsNum,
-    int dt
-  ) {
+  public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
     ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
     BHTree bh = BHUtils.createBHTree(entities, dims);
-    customThreadPool.submit(
-      () ->
-        entities
-          .parallelStream()
-          .forEach(
-            e -> {
-              //System.out.println(n)
-              BHUtils.netForce(e, bh);
-            }
-          )
-    );
+    customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
+      // System.out.println(n)
+      BHUtils.netForce(e, bh);
+    }));
 
-    customThreadPool.submit(
-      () ->
-        entities
-          .parallelStream()
-          .forEach(
-            e -> {
-              //System.out.println(n)
-              BHUtils.newPosition(e, dt);
-            }
-          )
-    );
+    customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
+      // System.out.println(n)
+      BHUtils.newPosition(e, dt);
+    }));
 
     customThreadPool.shutdownNow();
   }
 
-  public static void BarnesHutParallel(
-    ArrayList<Entity> entities,
-    int iters,
-    double dims,
-    int threadsNum,
-    int dt
-  )
-    throws InterruptedException {
+  public static void BarnesHutParallel(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt)
+      throws InterruptedException {
     Thread[] threads = new Thread[threadsNum];
 
     int sets = entities.size() / threadsNum;
@@ -117,26 +90,17 @@ public class BarnesHutMain {
         to = entities.size();
       }
 
-      threads[i] =
-        new Thread(
-          new BHRunnable(entities, from, to, iters, dt, dims, barrier),
-          "thread" + (i + 1)
-        );
+      threads[i] = new Thread(new BHRunnable(entities, from, to, iters, dt, dims, barrier), "thread" + (i + 1));
       threads[i].start();
     }
 
-    //doing shit....
+    // doing shit....
     for (int i = 0; i < threads.length; i++) {
       threads[i].join();
     }
   }
 
-  public static void BarnesHutSequential(
-    ArrayList<Entity> entities,
-    int iters,
-    double dims,
-    int dt
-  ) {
+  public static void BarnesHutSequential(ArrayList<Entity> entities, int iters, double dims, int dt) {
     for (int i = 0; i < iters; i++) {
       BHTree bh = BHUtils.createBHTree(entities, dims);
 
@@ -147,7 +111,7 @@ public class BarnesHutMain {
       for (Entity e : entities) {
         BHUtils.newPosition(e, dt);
       }
-      //System.out.println("Iteration: " + (i + 1));
+      // System.out.println("Iteration: " + (i + 1));
     }
   }
 }
