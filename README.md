@@ -2,10 +2,10 @@
 Implementing and parallelizing Barnes-Hut algorithm fot N-body simulation
 
 ## Prerequisites
-To compile and run this program, the system must have the following prerequisites: \\
-[1]: Java Runtime Enviroment (Java 8 or older) \\
-[2]: g++ compiler (The program in not tested using clang/llvm) \\
-[3]: TBB API Support \\
+To compile and run this program, the system must have the following prerequisites: //
+[1]: Java Runtime Enviroment (Java 8 or older) //
+[2]: g++ compiler (The program in not tested using clang/llvm) //
+[3]: TBB API Support //
 
 ## Compilation
 To compile:
@@ -13,7 +13,7 @@ To compile:
 cd build
 make
 ```
-The above will compile both C++ and Java implementation \\
+The above will compile both C++ and Java implementation //
 To compile the implementations individually use:
 ```
 cd build
@@ -24,7 +24,6 @@ and
 cd build
 make java //for Java implementation
 ```
-
 ## Automated testing and statistics calculation:
 To calculate the statistics (Python 3 required):
 ```
@@ -43,7 +42,6 @@ To configure and run for C++ (after compilation):
             -m Set this to calculate execution time 
 
 eg: ./bhCPP -f ../datasets/input1.txt -i 1000 -t 2 -m      
-
 ```
 To configure and run for Java (after compilation):
 ```
