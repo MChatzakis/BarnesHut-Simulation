@@ -5,7 +5,7 @@ Implementing and parallelizing Barnes-Hut algorithm fot N-body simulation
 To compile and run this program, the system must have the following prerequisites: \
 [1]: Java Runtime Enviroment (Java 8 or older) \
 [2]: g++ compiler (The program in not tested using clang/llvm) \
-[3]: TBB API Support \
+[3]: TBB API Support 
 
 ## Compilation
 To compile:
