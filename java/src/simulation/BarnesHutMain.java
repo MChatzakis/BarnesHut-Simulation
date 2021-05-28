@@ -1,14 +1,11 @@
 package simulation;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ForkJoinPool;
-import java.util.stream.IntStream;
-import structures.*;
+
+import structures.BHTree;
+import structures.Entity;
 
 public class BarnesHutMain {
 
@@ -18,11 +15,11 @@ public class BarnesHutMain {
     String filename = args[0];
     int iters = Integer.parseInt(args[1]);
     int threads = Integer.parseInt(args[2]);
-    
+
     int dt = 1;
     boolean runAsStream = false;
 
-    if (args.length == 4 && args[4].equals("stream")) {
+    if (args.length == 4 && args[3].equals("stream")) {
       runAsStream = true;
     }
 
@@ -37,8 +34,7 @@ public class BarnesHutMain {
 
     if (runAsStream) {
       BarnesHutStream(entities, iters, dims, threads, dt);
-    }
-    else if (threads == 0) {
+    } else if (threads == 0) {
       BarnesHutSequential(entities, iters, dims, dt);
     } else {
       BarnesHutParallel(entities, iters, dims, threads, dt);
@@ -48,7 +44,7 @@ public class BarnesHutMain {
     long finish = System.currentTimeMillis();
     long timeElapsed = finish - start;
 
-    // BHUtils.printEntities(entities);
+    BHUtils.printEntities(entities);
 
     System.out.println("Execution time 1: " + (double) estimatedTime / 1000000000);
     System.out.println("Execution time 2: " + (double) timeElapsed * 0.001);
@@ -111,6 +107,7 @@ public class BarnesHutMain {
       for (Entity e : entities) {
         BHUtils.newPosition(e, dt);
       }
+
       // System.out.println("Iteration: " + (i + 1));
     }
   }

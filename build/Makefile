@@ -11,12 +11,11 @@ CPP_NAME = bhCPP
 JAVA_NAME = BarnesHutMain
 JAR_NAME = bhJAVA.jar
 
-all: g++ javaBuild 
+all: c++ javaBuild 
 
 javaBuild: java cleanJavaClassFiles
 	
-
-g++: $(CPP_LIB) $(CPP_MAIN)
+c++: $(CPP_LIB) $(CPP_MAIN)
 	$(CC) $(CPP_MAIN) $(CC_FLAGS) $(CPP_NAME) 
 
 java: $(JAVA_MAIN)

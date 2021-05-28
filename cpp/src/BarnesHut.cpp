@@ -58,8 +58,19 @@ int main(int argc, char **argv)
         case 'm':
             printTime = 1;
             break;
-        case 'h':
-            break;
+        case 'h': /*help*/
+            printf(
+                "Usage: ./bhCPP -f dataset -i iterations -t threads [-m]\n"
+                "Options:\n"
+                "   -f <string>         Specifies the filename of the dataset.\n"
+                "   -i <int>            Specifies the number of iterations.\n"
+                "   -t <int>            Determines how many threads the algorithm will use. Must be in range of [1,4]. When its set as 0, the sequential version will run.\n"
+                "   -m                  When it is used, the execution time is displayed.\n"
+                "   -h                  Prints this help\n");
+            return 0;
+        default:
+            printf("Inavalid flags. Use [-h] for help\n");
+            return 0;
         }
     }
 

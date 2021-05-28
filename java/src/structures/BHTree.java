@@ -15,33 +15,18 @@ public class BHTree {
 
   public BHTree(Region region) {
     this.region = region;
-    //System.out.println("Created BHTree in region: " + region.toString());
+    // System.out.println("Created BHTree in region: " + region.toString());
   }
 
   private void createSubQuads() {
-    double xCenter = region.getCenter().getX(), yCenter = region
-      .getCenter()
-      .getY(), dim = region.getDimension();
+    double xCenter = region.getCenter().getX(), yCenter = region.getCenter().getY(), dim = region.getDimension();
 
-    //System.out.println("---------------- Creating sub quads ----------------");
-
-    quad1 =
-      new BHTree(
-        new Region(new Point(xCenter + dim / 2, yCenter + dim / 2), dim / 2)
-      );
-    quad2 =
-      new BHTree(
-        new Region(new Point(xCenter - dim / 2, yCenter + dim / 2), dim / 2)
-      );
-    quad3 =
-      new BHTree(
-        new Region(new Point(xCenter - dim / 2, yCenter - dim / 2), dim / 2)
-      );
-    quad4 =
-      new BHTree(
-        new Region(new Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2)
-      );
-    //System.out.println("----------------   Creating ended   ----------------");
+    // System.out.println("---------------- Creating sub quads ----------------");
+    quad1 = new BHTree(new Region(new Point(xCenter + dim / 2, yCenter + dim / 2), dim / 2));
+    quad2 = new BHTree(new Region(new Point(xCenter - dim / 2, yCenter + dim / 2), dim / 2));
+    quad3 = new BHTree(new Region(new Point(xCenter - dim / 2, yCenter - dim / 2), dim / 2));
+    quad4 = new BHTree(new Region(new Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2));
+    // System.out.println("---------------- Creating ended ----------------");
   }
 
   public boolean isLeaf() {
@@ -54,58 +39,41 @@ public class BHTree {
     }
 
     if (isLeaf()) {
-      //empty leaf case
+      // empty leaf case
       if (entity == null) {
-        /*System.out.println(
-          "Insert entity " +
-          _entity.getName() +
-          " to empty leaf in the region " +
-          region.toString()
-        );*/
+        /*
+         * System.out.println( "Insert entity " + _entity.getName() +
+         * " to empty leaf in the region " + region.toString() );
+         */
         entity = _entity;
         totalEntities++;
         return true;
       }
 
-      if (
-        entity.getPoint().getX() == _entity.getPoint().getX() &&
-        entity.getPoint().getY() == _entity.getPoint().getY()
-      ) {
+      if (entity.getPoint().getX() == _entity.getPoint().getX()
+          && entity.getPoint().getY() == _entity.getPoint().getY()) {
         System.out.println("Colision detected -- Patching the points");
 
         double dx = 0.01;
         double dy = 0.01;
 
-        _entity.setPoint(
-          new Point(
-            _entity.getPoint().getX() + dx,
-            _entity.getPoint().getY() + dy
-          )
-        );
+        _entity.setPoint(new Point(_entity.getPoint().getX() + dx, _entity.getPoint().getY() + dy));
       }
 
-      //else divide the tree
+      // else divide the tree
       createSubQuads();
 
-      if (
-        quad1.insertEntity(entity) ||
-        quad2.insertEntity(entity) ||
-        quad3.insertEntity(entity) ||
-        quad4.insertEntity(entity)
-      ) {
-        //entity = null;
+      if (quad1.insertEntity(entity) || quad2.insertEntity(entity) || quad3.insertEntity(entity)
+          || quad4.insertEntity(entity)) {
+        // entity = null;
       } else {
         assert (false);
       }
     }
 
-    if (
-      quad1.insertEntity(_entity) ||
-      quad2.insertEntity(_entity) ||
-      quad3.insertEntity(_entity) ||
-      quad4.insertEntity(_entity)
-    ) {
-      //calculate mass center
+    if (quad1.insertEntity(_entity) || quad2.insertEntity(_entity) || quad3.insertEntity(_entity)
+        || quad4.insertEntity(_entity)) {
+      // calculate mass center
       entity = Entity.massCenter(entity, _entity);
       totalEntities++;
 
@@ -123,14 +91,8 @@ public class BHTree {
     }
 
     System.out.println("-------------------------------------------");
-    System.out.println(
-      "The mass center of the system : " +
-      curr.getEntity().getPoint().toString() +
-      " total mass: " +
-      curr.getEntity().getMass() +
-      " total bodies: " +
-      curr.getTotalEntities()
-    );
+    System.out.println("The mass center of the system : " + curr.getEntity().getPoint().toString() + " total mass: "
+        + curr.getEntity().getMass() + " total bodies: " + curr.getTotalEntities());
     printBHTreeUtil(curr);
 
     System.out.println("-------------------------------------------");

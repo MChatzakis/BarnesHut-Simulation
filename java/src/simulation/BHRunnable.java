@@ -23,15 +23,8 @@ public class BHRunnable implements Runnable {
   private static int workDone = 0;
   private static int totalThreads = 0;
 
-  public BHRunnable(
-    ArrayList<Entity> entities,
-    int from,
-    int to,
-    int iters,
-    int dt,
-    double dims,
-    CyclicBarrier barrier
-  ) {
+  public BHRunnable(ArrayList<Entity> entities, int from, int to, int iters, int dt, double dims,
+      CyclicBarrier barrier) {
     this.entities = entities;
     this.from = from;
     this.to = to;
@@ -44,47 +37,50 @@ public class BHRunnable implements Runnable {
 
   @Override
   public void run() {
-    //System.out.println("Thread " + Thread.currentThread().getName() + "  Started Running!");
+    // System.out.println("Thread " + Thread.currentThread().getName() + " Started
+    // Running!");
     for (int k = 0; k < iters; k++) {
       try {
         BHTree bh = BHUtils.createBHTree(entities, dims);
         for (int i = from; i < to; i++) {
           BHUtils.netForce(entities.get(i), bh);
         }
-        //waitForAll();
+        // waitForAll();
         barrier.await();
         for (int i = from; i < to; i++) {
           BHUtils.newPosition(entities.get(i), dt);
         }
-        //waitForAll();
+        // waitForAll();
         barrier.await();
-      } catch (Exception e) {}
+      } catch (Exception e) {
+      }
     }
-    //System.out.println("Thread " + Thread.currentThread().getName() + "  Got its work done!");
+    // System.out.println("Thread " + Thread.currentThread().getName() + " Got its
+    // work done!");
 
   }
 
   void waitForAll() {
     synchronized (o) {
-      /*System.out.println(
-        "Thread " + Thread.currentThread().getName() + " reached the barrier"
-      );*/
+      /*
+       * System.out.println( "Thread " + Thread.currentThread().getName() +
+       * " reached the barrier" );
+       */
       workDone++;
       if (workDone < totalThreads) {
         try {
           o.wait();
         } catch (InterruptedException ex) {
-          Logger
-            .getLogger(BHRunnable.class.getName())
-            .log(Level.SEVERE, null, ex);
+          Logger.getLogger(BHRunnable.class.getName()).log(Level.SEVERE, null, ex);
         }
       } else {
         o.notifyAll();
         workDone = 0;
       }
-      /*System.out.println(
-        "Thread " + Thread.currentThread().getName() + " left the barrier"
-      );*/
+      /*
+       * System.out.println( "Thread " + Thread.currentThread().getName() +
+       * " left the barrier" );
+       */
     }
   }
 }

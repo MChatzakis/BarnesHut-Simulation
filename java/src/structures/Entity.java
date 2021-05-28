@@ -1,6 +1,5 @@
 package structures;
 
-
 import java.text.DecimalFormat;
 
 public class Entity {
@@ -40,42 +39,14 @@ public class Entity {
     String VyAp = format.format(Vy);
     String massAp = format.format(mass);
 
-    return (
-      this.name +
-      ": " +
-      point.toString() +
-      " " +
-      VxAp +
-      " " +
-      VyAp +
-      " " +
-      massAp
-    );
+    return (this.name + ": " + point.toString() + " " + VxAp + " " + VyAp + " " + massAp);
   }
 
   public static Entity massCenter(Entity e1, Entity e2) {
     double centerX, centerY, mass = e1.getMass() + e2.getMass();
 
-    centerX =
-      (
-        (
-          e1.getPoint().getX() *
-          e1.getMass() +
-          e2.getPoint().getX() *
-          e2.getMass()
-        )
-      ) /
-      mass;
-    centerY =
-      (
-        (
-          e1.getPoint().getY() *
-          e1.getMass() +
-          e2.getPoint().getY() *
-          e2.getMass()
-        )
-      ) /
-      mass;
+    centerX = ((e1.getPoint().getX() * e1.getMass() + e2.getPoint().getX() * e2.getMass())) / mass;
+    centerY = ((e1.getPoint().getY() * e1.getMass() + e2.getPoint().getY() * e2.getMass())) / mass;
 
     return new Entity(new Point(centerX, centerY), "MassCenter", 0, 0, mass);
   }
@@ -91,7 +62,7 @@ public class Entity {
   }
 
   public static double F(Entity e1, Entity e2) {
-    double G = 6.67 / Math.pow(10, 11); //6.67 × 10−11
+    double G = 6.67 / Math.pow(10, 11); // 6.67 × 10−11
     double dist = distance(e1, e2);
     double m1 = e1.getMass();
     double m2 = e2.getMass();
@@ -133,39 +104,39 @@ public class Entity {
     return mass;
   }
 
-  public void setMass(double mass){
-      this.mass = mass;
+  public void setMass(double mass) {
+    this.mass = mass;
   }
 
   public double getSFx() {
     return SFx;
   }
 
-  public void setSFx(double SFx){
-      this.SFx = SFx;
+  public void setSFx(double SFx) {
+    this.SFx = SFx;
   }
 
   public double getSFy() {
     return SFy;
   }
 
-  public void setSFy(Double SFy){
-      this.SFy = SFy;
+  public void setSFy(Double SFy) {
+    this.SFy = SFy;
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name){
-      this.name = name;
+  public void setName(String name) {
+    this.name = name;
   }
 
   public Point getPoint() {
     return point;
   }
 
-  public void setPoint(Point point){
-      this.point = point;
+  public void setPoint(Point point) {
+    this.point = point;
   }
 }
