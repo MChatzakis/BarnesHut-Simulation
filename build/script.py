@@ -7,12 +7,14 @@ import math
 
 tests = 5
 datasetNames = ["Input1", "Input2", "Input3", "Input4", "Input5"]
-#datasets = ["./../datasets/input1.txt", "./../datasets/input2.txt",
- #           "./../../datasets/input3.txt", "./../../datasets/input4.txt", "./../../datasets/input5.txt"]
+# datasets = ["./../datasets/input1.txt", "./../datasets/input2.txt",
+#           "./../../datasets/input3.txt", "./../../datasets/input4.txt", "./../../datasets/input5.txt"]
 
-datasets = ["./../datasets/input1.txt", "./../datasets/input2.txt"]
+datasets = [ #"./../datasets/input1.txt", "./../datasets/input2.txt",
+            "./../datasets/input3.txt"]
+            #, "./../datasets/input4.txt", "./../datasets/input5.txt"]
 threads = [0, 1, 2, 4]
-iterations = [30, 100, 200]
+iterations = [100, 500, 1000]
 
 tex = open("tables.tex", "w+")
 
@@ -80,7 +82,7 @@ for i in range(len(datasets)):
 
             speedupClassic = 0
             speedupN = 0
-            sdv = 0
+            sdv = "{:.5f}".format(stddev[y])
 
             if(y > 0):
                 speedupClassic = "{:.5f}".format(avg[0]/avg[y])
@@ -104,7 +106,7 @@ for i in range(len(datasets)):
 
 tex.write("\subsection*{4.3 Java Implementation}\n")
 
-for i in range(len(datasets)):
+for i in range(0):
 
     print("---------------------------------------------------------------")
 
@@ -128,9 +130,11 @@ for i in range(len(datasets)):
         for k in range(len(threads)):
 
             for m in range(tests):
-                #command = "./bhCPP -f " + datasets[i] + " -i " + \
+                # command = "./bhCPP -f " + datasets[i] + " -i " + \
                 #    str(iterations[j]) + " -t " + str(threads[k]) + " -m"
-                command = "java -jar bhJAVA.jar " + datasets[i] + " " + str(iterations[j]) + " " + str(threads[k])
+                command = "java -jar bhJAVA.jar " + \
+                    datasets[i] + " " + \
+                    str(iterations[j]) + " " + str(threads[k])
                 print(command)
 
                 out = subprocess.getoutput(command)
@@ -186,7 +190,8 @@ for i in range(len(datasets)):
 
 
 tex.close()
-print("Total Runs (for each):", len(datasets) * len(iterations) * len(threads) * tests)
+print("Total Runs (for each):", len(datasets)
+      * len(iterations) * len(threads) * tests)
 
 print("Cleaning...")
 make = subprocess.getoutput("make clean")

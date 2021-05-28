@@ -1,6 +1,13 @@
 package simulation;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.IntStream;
 import structures.*;
 
 public class BarnesHutMain {
@@ -27,7 +34,8 @@ public class BarnesHutMain {
       BarnesHutSequential(entities, iters, dims, dt);
     } else {
       //par
-      //BarnesHutParallel(entities,iters,dims,threads,dt);
+      //BarnesHutParallel(entities, iters, dims, threads, dt);
+      BarnesHutStream(entities, iters, dims, threads, dt);
     }
 
     //Instant finish = Instant.now();
@@ -50,6 +58,42 @@ public class BarnesHutMain {
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
+  public static void BarnesHutStream(
+    ArrayList<Entity> entities,
+    int iters,
+    double dims,
+    int threadsNum,
+    int dt
+  ) {
+    ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
+    BHTree bh = BHUtils.createBHTree(entities, dims);
+    customThreadPool.submit(
+      () ->
+        entities
+          .parallelStream()
+          .forEach(
+            e -> {
+              //System.out.println(n)
+              BHUtils.netForce(e, bh);
+            }
+          )
+    );
+
+    customThreadPool.submit(
+      () ->
+        entities
+          .parallelStream()
+          .forEach(
+            e -> {
+              //System.out.println(n)
+              BHUtils.newPosition(e, dt);
+            }
+          )
+    );
+
+    customThreadPool.shutdownNow();
+  }
+
   public static void BarnesHutParallel(
     ArrayList<Entity> entities,
     int iters,
@@ -61,6 +105,7 @@ public class BarnesHutMain {
     Thread[] threads = new Thread[threadsNum];
 
     int sets = entities.size() / threadsNum;
+    CyclicBarrier barrier = new CyclicBarrier(threadsNum);
 
     for (int i = 0; i < threads.length; i++) {
       int to;
@@ -74,7 +119,7 @@ public class BarnesHutMain {
 
       threads[i] =
         new Thread(
-          new BHRunnable(entities, from, to, iters, dt, dims),
+          new BHRunnable(entities, from, to, iters, dt, dims, barrier),
           "thread" + (i + 1)
         );
       threads[i].start();
@@ -102,7 +147,6 @@ public class BarnesHutMain {
       for (Entity e : entities) {
         BHUtils.newPosition(e, dt);
       }
-
       //System.out.println("Iteration: " + (i + 1));
     }
   }

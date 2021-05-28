@@ -6,10 +6,7 @@
 
 #include <unistd.h>
 
-//#include "tbb/parallel_for.h"
-//#include "tbb/task_scheduler_init.h>
 #include "tbb/tbb.h"
-
 #include "BarnesHut.h"
 
 #pragma warning(disable : 588)
@@ -21,7 +18,7 @@ using namespace std;
 BHTree *createBHTree(vector<Entity *> entities, double dims);
 
 double loadEntities(string dataset, vector<Entity *> &entities);
-double F(Entity e1, Entity e2);
+double F(Entity e1, Entity e2, double dist);
 double Fy(Entity e1, Entity e2);
 double Fx(Entity e1, Entity e2);
 
@@ -35,14 +32,11 @@ void appendTimeMeasurementsToFile(string filename, double time);
 void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int dt);
 void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int threads, int dt);
 
-void updateNetForceData(Entity *e, BHTree *bh);
-void calcNewPos(Entity *e, double dt, double dims);
-
-bool containsPoint(vector<Entity *> entities, Entity *en);
+void netForce(Entity *e, BHTree *bh);
+void newPosition(Entity *e, double dt, double dims);
 
 int main(int argc, char **argv)
 {
-
     vector<Entity *> entities;
     double dims;
     int opt, iters, threads, printTime = 0;
@@ -54,19 +48,15 @@ int main(int argc, char **argv)
         {
         case 'f':
             filename = string(optarg);
-            //cout << "Selected filename is " << filename << ".\n";
             break;
         case 'i':
             iters = stoi(optarg);
-            //cout << "Selected number of iterations is " << iters << ".\n";
             break;
         case 't':
             threads = stoi(optarg);
-            //cout << "Selected number of threads is " << threads << ".\n";
             break;
         case 'm':
             printTime = 1;
-            //cout << "Execution time will be printed.\n";
             break;
         case 'h':
             break;
@@ -77,15 +67,17 @@ int main(int argc, char **argv)
 
     //printEntities(entities);
 
+    /*This method for time measuring is accurate, giving the same results as time ./exec*/
     auto start = high_resolution_clock::now();
 
+    /*Sequential implementation is differianted from parallel*/
     if (threads == 0)
     {
-        BarnesHutSeq(entities, dims, iters, 1);
+        BarnesHutSeq(entities, dims, iters, 1); //dt = 1 by default
     }
     else
     {
-        BarnesHutPar(entities, dims, iters, threads, 1);
+        BarnesHutPar(entities, dims, iters, threads, 1); //dt = 1 by default
     }
 
     auto end = high_resolution_clock::now();
@@ -93,6 +85,7 @@ int main(int argc, char **argv)
 
     printEntities(entities);
 
+    /*The time measurements are appended to file to calculate statistics about the implementation*/
     if (printTime)
     {
         double seconds = duration.count() * 0.001;
@@ -111,16 +104,19 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
 
     for (int i = 0; i < iterations; i++)
     {
+        //Phase 1: Create a new BHTree for every iteration
         bh = createBHTree(entities, dims);
 
+        //Phase 2: Calculate the total force acting on every body (O(nlogn))
         for (Entity *e : entities)
         {
-            updateNetForceData(e, bh);
+            netForce(e, bh);
         }
 
+        //Phase 3: For every body, calculate its new position based on the total force (O(n))
         for (Entity *e : entities)
         {
-            calcNewPos(e, dt, dims);
+            newPosition(e, dt, dims);
         }
 
         //cout << "Iteration " << i + 1 << "\n";
@@ -133,41 +129,49 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
     size_t size = entities.size();
     size_t grainSize = size / threads;
 
+    /*Setting the number of threads is an obsolete tactic, but it is used here for statistical reasons*/
     task_scheduler_init init(threads);
 
     for (int i = 0; i < iterations; i++)
     {
+        /*
+            Phase 1: Create a new BHTree for every simulation. 
+            This action is not parallel, as it results to high overhead
+        */
         bh = createBHTree(entities, dims);
 
+        /*
+            Phase 2: Calculate the total netforce acting on each body.
+            The parallelism is based on the fact that each thread is assigned a chunk of bodies.
+            For each body of the chunk, it changes only the his SFx and his SFy, without modifying the 
+            speed or coordinates, thus there is no data race.
+        */
         parallel_for(blocked_range<size_t>(0, size),
                      [&](const blocked_range<size_t> &r) -> void
                      {
                          for (size_t i = r.begin(); i != r.end(); i++)
                          {
-                             updateNetForceData(entities[i], bh);
+                             netForce(entities[i], bh);
                          }
-                         //cout << "Thread operates inside lambda\n";
-                     });
+                     }); //barrier
 
-        //wait_for_all();
-        //cout << "All threads ended\n";
-
+        /*
+            Phase 3: Based on Phase 2 calculations, each threads calculates the new coordinates of each chunk.
+        */
         parallel_for(blocked_range<size_t>(0, size),
                      [&](const blocked_range<size_t> &r) -> void
                      {
                          for (size_t i = r.begin(); i != r.end(); i++)
                          {
-                             calcNewPos(entities[i], dt, dims);
+                             newPosition(entities[i], dt, dims);
                          }
-                     });
+                     }); //barrier
 
-        //cout << "Iteration " << i + 1 << "\n";
+        cout << "Iteration " << i + 1 << "\n";
     }
-
-    //printEntities(entities);
 }
 
-void updateNetForceData(Entity *e, BHTree *bh)
+void netForce(Entity *e, BHTree *bh)
 {
     bool pathFound = false;
 
@@ -176,6 +180,11 @@ void updateNetForceData(Entity *e, BHTree *bh)
         return;
     }
 
+    /*
+        Reaching a leaf means that the traverse has come to an end.
+        It is clear that this leaf can only be the leaf containing body e, 
+        else there has ocurred an error through the iterative traverse of the tree
+    */
     if (bh->isLeaf())
     {
         assert(bh->getEntity() == e);
@@ -185,8 +194,15 @@ void updateNetForceData(Entity *e, BHTree *bh)
     BHTree *quads[4] = {bh->getQuad1(), bh->getQuad2(), bh->getQuad3(), bh->getQuad4()};
     BHTree *quadToGo = NULL;
 
+    /*
+        Through this iteration we have two major aims:
+        1. Find the subquad that entity e is located, to proceed there recursively
+        2. Calculate the force acting on body e from all other subquads, with each subquad 
+        represented totally as the mass center of all the bodies it contains.
+    */
     for (int i = 0; i < 4; i++)
     {
+        /*This operation is done only for quads that contain entities*/
         if (quads[i] != NULL)
         {
             Entity *cent = quads[i]->getEntity();
@@ -197,36 +213,41 @@ void updateNetForceData(Entity *e, BHTree *bh)
                 continue;
             }
 
-            //vector<Entity *> entitiesOfRegion = quads[i]->getTotalEntities();
-
-            //ContainsPoint is really slow.. =>optimize?
-            //if (containsPoint(entitiesOfRegion, e))
+            /*
+                Warning: pathFound flag is a patch for the cases that bodies are on the border of different subquads.
+                e.g. If an entity is located at (0,0), we will (by default) assign in to subquad 1, but containgPoint 
+                method will return true for every subquad of this region. 
+                This problem is solved with the help of this flag, which is set when we find the first matching region.  
+            */
             if (!pathFound && reg.containsPoint(e->getPoint()))
             {
-                //cout << "Found the region that body " << e->getName() << " belongs. Going to squad[ " << i << " ]\n";
-                quadToGo = quads[i];
-
+                //cout << "Found the region that body " << e->getName() << " belongs. Going to s_quad[ " << i << " ]\n";
+                quadToGo = quads[i]; //saving the destination quad
                 pathFound = true;
             }
             else
             {
+                /*In this case, entity cent represents the mass center of the current adjacent subquad*/
+
                 //cout << "Calculating net force for body " << e->toString() << " by body " << cent->toString() << "\n";
 
-                double fx = Fx(*cent, *e);
-                double fy = Fy(*cent, *e);
+                /*The force of two entities always points to one another (gravitational law)*/
+                double fx = Fx(*e, *cent);
+                double fy = Fy(*e, *cent);
 
+                /*As SFx and SFy are only modifies by the thread assigned this chunk, there is no data race*/
                 e->addToSFx(fx);
                 e->addToSFy(fy);
             }
         }
     }
 
-    //fix;
+    /*quadToGo should never be NULL*/
     assert(quadToGo);
-    updateNetForceData(e, quadToGo);
+    netForce(e, quadToGo);
 }
 
-void calcNewPos(Entity *e, double dt, double dims)
+void newPosition(Entity *e, double dt, double dims)
 {
     double SFy = e->getSFy();
     double SFx = e->getSFx();
@@ -237,6 +258,7 @@ void calcNewPos(Entity *e, double dt, double dims)
     double oldX = e->getPoint().getX();
     double oldY = e->getPoint().getY();
 
+    /*Just running the Newtonian equations*/
     double Ax = SFx / m;
     double Ay = SFy / m;
 
@@ -246,6 +268,7 @@ void calcNewPos(Entity *e, double dt, double dims)
     double newX = oldX + newVx * dt;
     double newY = oldY + newVy * dt;
 
+    /*Pathing the coordinates in case a body leaves the universe*/
     if (newX > dims)
     {
         newX = dims;
@@ -266,8 +289,10 @@ void calcNewPos(Entity *e, double dt, double dims)
         newY = -dims;
     }
 
+    /*Updating the bodies data*/
     e->setPoint(Point(newX, newY));
 
+    /*This is added here because for every new simulation we may consider that we run again from the start*/
     e->setSFx(0);
     e->setSFy(0);
 
@@ -360,10 +385,9 @@ double distance(Entity e1, Entity e2)
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
 }
 
-double F(Entity e1, Entity e2)
+double F(Entity e1, Entity e2, double dist)
 {
     double G = 6.67 / pow(10, 11); //6.67 × 10−11
-    double dist = distance(e1, e2);
     double m1 = e1.getMass();
     double m2 = e2.getMass();
 
@@ -374,16 +398,16 @@ double Fx(Entity e1, Entity e2)
 {
     double x1 = e1.getPoint().getX(), x2 = e2.getPoint().getX();
     double r = distance(e1, e2);
-    double f = F(e1, e2);
+    double f = F(e1, e2, r);
 
-    return f * (x2 - x1) / r;
+    return f * (x2 - x1) / r; //We prefer x2-x1 and not |x2-x1| to also calculate the force route (<- or ->)
 }
 
 double Fy(Entity e1, Entity e2)
 {
     double y1 = e1.getPoint().getY(), y2 = e2.getPoint().getY();
     double r = distance(e1, e2);
-    double f = F(e1, e2);
+    double f = F(e1, e2, r);
 
     return f * (y2 - y1) / r;
 }
@@ -449,4 +473,6 @@ void appendTimeMeasurementsToFile(string filename, double time)
     outfile.open(filename, std::ios_base::app); // append instead of overwrite
 
     outfile << time << endl;
+
+    outfile.close();
 }
