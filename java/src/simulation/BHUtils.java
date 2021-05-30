@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -89,7 +90,7 @@ public class BHUtils {
     return bh;
   }
 
-  public static void newPosition(Entity e, int dt) {
+  public static void newPosition(Entity e, int dt, double dims) {
     double SFy = e.getSFy();
     double SFx = e.getSFx();
     double m = e.getMass();
@@ -108,16 +109,29 @@ public class BHUtils {
     double newX = oldX + newVx * dt;
     double newY = oldY + newVy * dt;
 
-    //add patch
+    /* Pathing the coordinates in case a body leaves the universe */
+    if (newX > dims) {
+      newX = dims;
+    }
+
+    if (newX < -dims) {
+      newX = -dims;
+    }
+
+    if (newY > dims) {
+      newY = dims;
+    }
+
+    if (newY < -dims) {
+      newY = -dims;
+    }
 
     e.setPoint(new Point(newX, newY));
-
-    //??
     e.setSFx(0.0);
     e.setSFy(0.0);
-
     e.setVx(newVx);
     e.setVy(newVy);
+
   }
 
   public static void netForce(Entity e, BHTree bh) {
@@ -142,22 +156,21 @@ public class BHUtils {
 
         if (curr != null) {
           if (!pathFound && reg.containsPoint(e.getPoint())) {
-            /*
-             * System.out.println( "Found the region that body " + e.getName() +
-             * " belongs. Going to quad[ " + i + " ]" );
-             */
+
+            // System.out.println("Found the region that body " + e.getName() + " belongs.
+            // Going to quad[ " + i + " ]");
 
             quadToGo = quads[i];
             pathFound = true;
           } else {
-            /*
-             * System.out.println( "Calculating net force for body " + e.toString() +
-             * " by body " + curr.toString() );
-             */
 
-            double f = Entity.F(curr, e);
-            double fx = Entity.Fx(curr, e, f);
-            double fy = Entity.Fy(curr, e, f);
+            // System.out.println("Calculating net force for body " + e.toString() + " by
+            // body " + curr.toString());
+
+            double r = Entity.distance(e, curr);
+            double f = Entity.F(e, curr, r);
+            double fx = Entity.Fx(e, curr, f, r);
+            double fy = Entity.Fy(e, curr, f, r);
 
             e.addToSFx(fx);
             e.addToSFy(fy);
@@ -194,12 +207,18 @@ public class BHUtils {
 
   public static void appendToFile(String filename, double time) {
     try {
+      String timeToPrint;
+      DecimalFormat numberFormat = new DecimalFormat("#.000");
       FileWriter fw = new FileWriter(filename, true);
       BufferedWriter bw = new BufferedWriter(fw);
-      bw.write(time + "\n");
-      // bw.newLine();
+
+      timeToPrint = numberFormat.format(time);
+      // bw.write(time + "\n");
+      bw.write(timeToPrint + "\n");
+      
       bw.close();
     } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 }

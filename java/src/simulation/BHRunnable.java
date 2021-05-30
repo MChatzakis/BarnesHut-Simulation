@@ -1,11 +1,12 @@
 package simulation;
 
 import java.util.ArrayList;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import structures.*;
+
+import structures.BHTree;
+import structures.Entity;
 
 public class BHRunnable implements Runnable {
 
@@ -37,35 +38,28 @@ public class BHRunnable implements Runnable {
 
   @Override
   public void run() {
-    // System.out.println("Thread " + Thread.currentThread().getName() + " Started
-    // Running!");
     for (int k = 0; k < iters; k++) {
       try {
         BHTree bh = BHUtils.createBHTree(entities, dims);
         for (int i = from; i < to; i++) {
           BHUtils.netForce(entities.get(i), bh);
         }
-        // waitForAll();
+
         barrier.await();
+
         for (int i = from; i < to; i++) {
-          BHUtils.newPosition(entities.get(i), dt);
+          BHUtils.newPosition(entities.get(i), dt, dims);
         }
-        // waitForAll();
+
         barrier.await();
       } catch (Exception e) {
+        e.printStackTrace();
       }
     }
-    // System.out.println("Thread " + Thread.currentThread().getName() + " Got its
-    // work done!");
-
   }
 
   void waitForAll() {
     synchronized (o) {
-      /*
-       * System.out.println( "Thread " + Thread.currentThread().getName() +
-       * " reached the barrier" );
-       */
       workDone++;
       if (workDone < totalThreads) {
         try {
@@ -77,10 +71,6 @@ public class BHRunnable implements Runnable {
         o.notifyAll();
         workDone = 0;
       }
-      /*
-       * System.out.println( "Thread " + Thread.currentThread().getName() +
-       * " left the barrier" );
-       */
     }
   }
 }

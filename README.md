@@ -40,15 +40,16 @@ To configure and run for C++ (after compilation):
             -i [<int> iterations]
             -t [<int> threads]
             -m Set this to calculate execution time 
+            -r Set this to print results after the end of simulation
 
-eg: ./bhCPP -f ../datasets/input1.txt -i 1000 -t 2 -m      
+eg: ./bhCPP -f ../datasets/input1.txt -i 1000 -t 2 -m -r      
 ```
 To configure and run for Java (after compilation):
 ```
 java -jar bhJAVA.jar    [<string> dataset]
                         [<int> iterations]
                         [<int> threads]
-                        "stream" when you write "stream" as the forth argument, the parallel stream of Java 8 will be executed 
+                        "stream" when you write "stream" as the forth argument, the parallel stream of Java 8 will be executed (If Java 8 is not supported the program wont compile)
 
 eg: java -jar bhJAVA ../datasets/input1.txt 1000 2
 ```
@@ -57,4 +58,4 @@ eg: java -jar bhJAVA ../datasets/input1.txt 1000 2
 The executables produces two output files: "simulation{LANGUAGE}.csv" (the final coordinates and speeds) and "times{LANGUAGE}.txt" (the time measurements used by the test script for the two implementation)
 
 ## Report
-There is a report provided, presenting the running times of the implementations on the given datasets for different configurations
+There is a report provided, presenting the running times of the implementations on the given datasets for different configurations.

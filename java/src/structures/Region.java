@@ -1,6 +1,5 @@
 package structures;
 
-
 public class Region {
 
   private double dimension;
@@ -25,9 +24,7 @@ public class Region {
     double currY = _center.getY();
     double currX = _center.getX();
 
-    return (
-      (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart)
-    );
+    return ((currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart));
   }
 
   public void setDimension(double dimension) {
@@ -42,7 +39,7 @@ public class Region {
     return center;
   }
 
-  public void setCenter(Point center){
+  public void setCenter(Point center) {
     this.center = center;
   }
 }

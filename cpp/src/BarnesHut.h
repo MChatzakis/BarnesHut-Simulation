@@ -58,6 +58,8 @@ private:
     double SFx = 0;
     double SFy = 0;
 
+    bool isMassCenter = false;
+
     std::string name;
     Point point;
 
@@ -67,6 +69,16 @@ public:
     Point getPoint()
     {
         return point;
+    }
+
+    bool getIsMassCenter()
+    {
+        return isMassCenter;
+    }
+
+    void setIsMassCenter(bool mc)
+    {
+        this->isMassCenter = mc;
     }
 
     void setPoint(Point dPoint)
@@ -153,7 +165,7 @@ Entity *massCenter(Entity *e1, Entity *e2)
     centerX = ((e1->getPoint().getX() * e1->getMass()) + (e2->getPoint().getX() * e2->getMass())) / mass;
     centerY = ((e1->getPoint().getY() * e1->getMass()) + (e2->getPoint().getY() * e2->getMass())) / mass;
 
-    return new Entity(Point(centerX, centerY), "Mass Center", 0, 0, mass);
+    return new Entity(Point(centerX, centerY), "MassCenter", 0, 0, mass);
 }
 
 class Region
@@ -249,11 +261,19 @@ public:
         double xCenter = region.getCenter().getX(), yCenter = region.getCenter().getY(), dim = region.getDimension();
 
         //std::cout << "---------------- Creating sub quads ----------------\n";
+        try
+        {
+            quad1 = new BHTree(Region(Point(xCenter + dim / 2, yCenter + dim / 2), dim / 2));
+            quad2 = new BHTree(Region(Point(xCenter - dim / 2, yCenter + dim / 2), dim / 2));
+            quad3 = new BHTree(Region(Point(xCenter - dim / 2, yCenter - dim / 2), dim / 2));
+            quad4 = new BHTree(Region(Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2));
+        }
+        catch (std::bad_alloc &)
+        {
 
-        quad1 = new BHTree(Region(Point(xCenter + dim / 2, yCenter + dim / 2), dim / 2));
-        quad2 = new BHTree(Region(Point(xCenter - dim / 2, yCenter + dim / 2), dim / 2));
-        quad3 = new BHTree(Region(Point(xCenter - dim / 2, yCenter - dim / 2), dim / 2));
-        quad4 = new BHTree(Region(Point(xCenter + dim / 2, yCenter - dim / 2), dim / 2));
+            std::cout << "Memory failed!!\n";
+            exit(-1);
+        }
 
         //std::cout << "----------------   Creating ended   ----------------\n";
     }
@@ -311,7 +331,22 @@ public:
             quad3->insertEntity(_entity) ||
             quad4->insertEntity(_entity))
         {
-            entity = massCenter(entity, _entity);
+            Entity *cmass = massCenter(entity, _entity);
+            cmass->setIsMassCenter(true);
+            /*
+                If this deallocation is not done, it could actually
+                crash the simulation because of the high memory requirements
+                Deallocation is done only for the BHTree - created nodes, and not for the actual bodies.    
+            */
+            //if(entity->getName() == "MassCenter"){ //Removing nodes from their name is not a good practice.
+            if (entity->getIsMassCenter())
+            {
+                //Getting here means that the memory pointed to entity is allocated by the BHTree
+                delete entity;
+                entity = NULL;
+            }
+
+            entity = cmass;
             return true;
         }
         else

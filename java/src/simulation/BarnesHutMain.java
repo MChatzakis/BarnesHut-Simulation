@@ -10,7 +10,6 @@ import structures.Entity;
 public class BarnesHutMain {
 
   public static void main(String[] args) throws InterruptedException {
-    long startTime = System.nanoTime();
 
     String filename = args[0];
     int iters = Integer.parseInt(args[1]);
@@ -40,33 +39,36 @@ public class BarnesHutMain {
       BarnesHutParallel(entities, iters, dims, threads, dt);
     }
 
-    long estimatedTime = System.nanoTime() - startTime;
     long finish = System.currentTimeMillis();
     long timeElapsed = finish - start;
 
     BHUtils.printEntities(entities);
 
-    System.out.println("Execution time 1: " + (double) estimatedTime / 1000000000);
-    System.out.println("Execution time 2: " + (double) timeElapsed * 0.001);
+    System.out.println("Execution time: " + (double) timeElapsed * 0.001 + " seconds");
 
     BHUtils.printEntities(entities, "simulationJAVA.txt");
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
   public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
-    ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
-    BHTree bh = BHUtils.createBHTree(entities, dims);
-    customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
-      // System.out.println(n)
-      BHUtils.netForce(e, bh);
-    }));
 
-    customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
-      // System.out.println(n)
-      BHUtils.newPosition(e, dt);
-    }));
+    ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
+
+    for (int i = 0; i < iters; i++) {
+      BHTree bh = BHUtils.createBHTree(entities, dims);
+
+      customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
+        BHUtils.netForce(e, bh);
+      }));
+
+      customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
+        BHUtils.newPosition(e, dt, dims);
+      }));
+
+    }
 
     customThreadPool.shutdownNow();
+
   }
 
   public static void BarnesHutParallel(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt)
@@ -90,7 +92,6 @@ public class BarnesHutMain {
       threads[i].start();
     }
 
-    // doing shit....
     for (int i = 0; i < threads.length; i++) {
       threads[i].join();
     }
@@ -105,7 +106,7 @@ public class BarnesHutMain {
       }
 
       for (Entity e : entities) {
-        BHUtils.newPosition(e, dt);
+        BHUtils.newPosition(e, dt, dims);
       }
 
       // System.out.println("Iteration: " + (i + 1));

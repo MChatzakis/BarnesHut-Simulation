@@ -18,13 +18,16 @@ using namespace std;
 BHTree *createBHTree(vector<Entity *> entities, double dims);
 
 double loadEntities(string dataset, vector<Entity *> &entities);
+double distance(Entity e1, Entity e2);
 double F(Entity e1, Entity e2, double dist);
-double Fy(Entity e1, Entity e2);
-double Fx(Entity e1, Entity e2);
+double Fy(Entity e1, Entity e2, double f, double r);
+double Fx(Entity e1, Entity e2, double f, double r);
 
 void printEntities(vector<Entity *> entities);
 void printBHTreeUtil(BHTree *curr);
 void printBHTree(BHTree *curr);
+void freeBHTree(BHTree *curr);
+void freeEntities(vector<Entity *> &entities);
 
 void printEntitiesToFile(string filename, vector<Entity *> entities);
 void appendTimeMeasurementsToFile(string filename, double time);
@@ -39,10 +42,10 @@ int main(int argc, char **argv)
 {
     vector<Entity *> entities;
     double dims;
-    int opt, iters, threads, printTime = 0;
+    int opt, iters, threads, printTime = 0, printResults = 0;
     string filename;
 
-    while ((opt = getopt(argc, argv, "f:i:t:mh")) != -1)
+    while ((opt = getopt(argc, argv, "f:i:t:mrh")) != -1)
     {
         switch (opt)
         {
@@ -58,6 +61,9 @@ int main(int argc, char **argv)
         case 'm':
             printTime = 1;
             break;
+        case 'r':
+            printResults = 1;
+            break;
         case 'h': /*help*/
             printf(
                 "Usage: ./bhCPP -f dataset -i iterations -t threads [-m]\n"
@@ -66,6 +72,7 @@ int main(int argc, char **argv)
                 "   -i <int>            Specifies the number of iterations.\n"
                 "   -t <int>            Determines how many threads the algorithm will use. Must be in range of [1,4]. When its set as 0, the sequential version will run.\n"
                 "   -m                  When it is used, the execution time is displayed.\n"
+                "   -r                  When it is used, the results are displayed.\n"
                 "   -h                  Prints this help\n");
             return 0;
         default:
@@ -75,8 +82,6 @@ int main(int argc, char **argv)
     }
 
     dims = loadEntities(filename, entities);
-
-    //printEntities(entities);
 
     /*This method for time measuring is accurate, giving the same results as time ./exec*/
     auto start = high_resolution_clock::now();
@@ -94,7 +99,10 @@ int main(int argc, char **argv)
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(end - start);
 
-    printEntities(entities);
+    if (printResults)
+    {
+        printEntities(entities);
+    }
 
     /*The time measurements are appended to file to calculate statistics about the implementation*/
     if (printTime)
@@ -105,6 +113,7 @@ int main(int argc, char **argv)
     }
 
     printEntitiesToFile("simulationCPP.txt", entities);
+    freeEntities(entities);
 
     return 0;
 }
@@ -130,6 +139,7 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
             newPosition(e, dt, dims);
         }
 
+        freeBHTree(bh);
         //cout << "Iteration " << i + 1 << "\n";
     }
 }
@@ -178,7 +188,9 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
                          }
                      }); //barrier
 
-        cout << "Iteration " << i + 1 << "\n";
+        //printBHTree(bh);
+        freeBHTree(bh);
+        //cout << "Iteration " << i + 1 << "\n";
     }
 }
 
@@ -243,9 +255,12 @@ void netForce(Entity *e, BHTree *bh)
                 //cout << "Calculating net force for body " << e->toString() << " by body " << cent->toString() << "\n";
 
                 /*The force of two entities always points to one another (gravitational law)*/
-                double fx = Fx(*e, *cent);
-                double fy = Fy(*e, *cent);
-
+                //double fx = Fx(*e, *cent);
+                //double fy = Fy(*e, *cent);
+                double r = distance(*e, *cent);
+                double f = F(*e, *cent, r);
+                double fx = Fx(*e, *cent, f, r);
+                double fy = Fy(*e, *cent, f, r);
                 /*As SFx and SFy are only modifies by the thread assigned this chunk, there is no data race*/
                 e->addToSFx(fx);
                 e->addToSFy(fy);
@@ -313,7 +328,16 @@ void newPosition(Entity *e, double dt, double dims)
 
 BHTree *createBHTree(vector<Entity *> entities, double dims)
 {
-    BHTree *tree = new BHTree(Region(Point(0, 0), dims));
+    BHTree *tree = NULL;
+    try
+    {
+        tree = new BHTree(Region(Point(0, 0), dims));
+    }
+    catch (std::bad_alloc &)
+    {
+        cout << "gtxt!\n";
+    }
+
     for (Entity *e : entities)
     {
         tree->insertEntity(e);
@@ -405,20 +429,20 @@ double F(Entity e1, Entity e2, double dist)
     return G * (m1 * m2) / pow(dist, 2);
 }
 
-double Fx(Entity e1, Entity e2)
+double Fx(Entity e1, Entity e2, double f, double r)
 {
     double x1 = e1.getPoint().getX(), x2 = e2.getPoint().getX();
-    double r = distance(e1, e2);
-    double f = F(e1, e2, r);
+    //double r = distance(e1, e2);
+    //double f = F(e1, e2, r);
 
     return f * (x2 - x1) / r; //We prefer x2-x1 and not |x2-x1| to also calculate the force route (<- or ->)
 }
 
-double Fy(Entity e1, Entity e2)
+double Fy(Entity e1, Entity e2, double f, double r)
 {
     double y1 = e1.getPoint().getY(), y2 = e2.getPoint().getY();
-    double r = distance(e1, e2);
-    double f = F(e1, e2, r);
+    //double r = distance(e1, e2);
+    //double f = F(e1, e2, r);
 
     return f * (y2 - y1) / r;
 }
@@ -486,4 +510,35 @@ void appendTimeMeasurementsToFile(string filename, double time)
     outfile << time << endl;
 
     outfile.close();
+}
+
+void freeBHTree(BHTree *curr)
+{
+    Entity *e;
+
+    if (curr == NULL)
+    {
+        return;
+    }
+
+    if (!curr->isLeaf())
+    {
+        e = curr->getEntity();
+        delete e;
+    }
+
+    freeBHTree(curr->getQuad1());
+    freeBHTree(curr->getQuad2());
+    freeBHTree(curr->getQuad3());
+    freeBHTree(curr->getQuad4());
+
+    delete curr;
+}
+
+void freeEntities(vector<Entity *> &entities)
+{
+    for (Entity *e : entities)
+    {
+        delete e;
+    }
 }

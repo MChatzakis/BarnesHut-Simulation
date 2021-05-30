@@ -13,6 +13,9 @@ JAR_NAME = bhJAVA.jar
 
 all: c++ javaBuild 
 
+tests: script.py
+	python3 script.py
+
 javaBuild: java cleanJavaClassFiles
 	
 c++: $(CPP_LIB) $(CPP_MAIN)
@@ -39,7 +42,6 @@ cleanJava: cleanJavaClassFiles
 	rm -rf simulationJAVA.txt
 	rm -rf timesJAVA.txt
 	
-
 cleanCPP: 
 	rm -rf $(CPP_NAME)	
 	rm -rf simulationCPP.txt

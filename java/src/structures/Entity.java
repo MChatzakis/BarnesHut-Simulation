@@ -61,26 +61,26 @@ public class Entity {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
   }
 
-  public static double F(Entity e1, Entity e2) {
+  public static double F(Entity e1, Entity e2, double dist) {
     double G = 6.67 / Math.pow(10, 11); // 6.67 × 10−11
-    double dist = distance(e1, e2);
+    // double dist = distance(e1, e2);
     double m1 = e1.getMass();
     double m2 = e2.getMass();
 
     return G * (m1 * m2) / Math.pow(dist, 2);
   }
 
-  public static double Fx(Entity e1, Entity e2, Double f) {
+  public static double Fx(Entity e1, Entity e2, double f, double r) {
     double x1 = e1.getPoint().getX(), x2 = e2.getPoint().getX();
-    double r = distance(e1, e2);
-
+    // double r = distance(e1, e2);
+    // double f = F(e1,e2,r);
     return f * (x2 - x1) / r;
   }
 
-  public static double Fy(Entity e1, Entity e2, Double f) {
+  public static double Fy(Entity e1, Entity e2, double f, double r) {
     double y1 = e1.getPoint().getY(), y2 = e2.getPoint().getY();
-    double r = distance(e1, e2);
-
+    //double r = distance(e1, e2);
+    //double f = F(e1, e2, r);
     return f * (y2 - y1) / r;
   }
 
