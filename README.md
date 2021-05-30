@@ -22,8 +22,10 @@ make c++ //for C++ implementation
 and 
 ```
 cd build
-make java //for Java implementation
+make javaBuild //for Java implementation
 ```
+Note: If the project is splitted (different dirs for java and c++), "make all" wont work. You must use the above make targets (c++, javaBuild) to compile each implementation manually.
+
 ## Automated testing and statistics calculation:
 To calculate the statistics (Python 3 required):
 ```

@@ -198,6 +198,32 @@ public:
         return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
     }
 
+    bool containsPoint(Point _center, int quadNo)
+    {
+        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
+        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
+
+        double currY = _center.getY();
+        double currX = _center.getX();
+
+        switch (quadNo)
+        {
+        case 1:
+            return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
+        case 2:
+            return (currY <= yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
+        case 3:
+            return (currY < yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
+        case 4:
+            return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX > xStart);
+        default:
+            assert(0);
+        }
+
+        assert(0);
+        return false;
+    }
+
     std::string toString()
     {
         std::string str;

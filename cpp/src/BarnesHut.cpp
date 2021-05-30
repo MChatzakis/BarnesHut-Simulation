@@ -38,6 +38,7 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
 void netForce(Entity *e, BHTree *bh);
 void newPosition(Entity *e, double dt, double dims);
 
+
 int main(int argc, char **argv)
 {
     vector<Entity *> entities;
@@ -76,7 +77,7 @@ int main(int argc, char **argv)
                 "   -h                  Prints this help\n");
             return 0;
         default:
-            printf("Inavalid flags. Use [-h] for help\n");
+            printf("Invalid flags. Use [-h] for help\n");
             return 0;
         }
     }
@@ -126,10 +127,12 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
     {
         //Phase 1: Create a new BHTree for every iteration
         bh = createBHTree(entities, dims);
-
+        //printBHTree(bh);
+        
         //Phase 2: Calculate the total force acting on every body (O(nlogn))
         for (Entity *e : entities)
         {
+            //cout << "-------- Entity " << e->getName() << " --------\n";
             netForce(e, bh);
         }
 
@@ -140,7 +143,7 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
         }
 
         freeBHTree(bh);
-        //cout << "Iteration " << i + 1 << "\n";
+        cout << "Iteration " << i + 1 << "\n";
     }
 }
 
@@ -148,7 +151,6 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
 {
     BHTree *bh;
     size_t size = entities.size();
-    size_t grainSize = size / threads;
 
     /*Setting the number of threads is an obsolete tactic, but it is used here for statistical reasons*/
     task_scheduler_init init(threads);
@@ -190,14 +192,12 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
 
         //printBHTree(bh);
         freeBHTree(bh);
-        //cout << "Iteration " << i + 1 << "\n";
+        cout << "Iteration " << i + 1 << "\n";
     }
 }
 
 void netForce(Entity *e, BHTree *bh)
 {
-    bool pathFound = false;
-
     if (bh == NULL)
     {
         return;
@@ -210,7 +210,21 @@ void netForce(Entity *e, BHTree *bh)
     */
     if (bh->isLeaf())
     {
-        assert(bh->getEntity() == e);
+        Entity *body = bh->getEntity();
+        if (body != e && body != NULL)
+        {
+            //cout << "Calculating net force for body " << e->getName() << " by body " << body->getName() << " .Region: " << bh->getRegion().toString() << "\n";
+
+            double r = distance(*e, *body);
+            double f = F(*e, *body, r);
+
+            double fx = Fx(*e, *body, f, r);
+            double fy = Fy(*e, *body, f, r);
+            
+            e->addToSFx(fx);
+            e->addToSFy(fy);
+        }
+
         return;
     }
 
@@ -242,35 +256,51 @@ void netForce(Entity *e, BHTree *bh)
                 method will return true for every subquad of this region. 
                 This problem is solved with the help of this flag, which is set when we find the first matching region.  
             */
-            if (!pathFound && reg.containsPoint(e->getPoint()))
+            if (reg.containsPoint(e->getPoint(), i + 1))
             {
-                //cout << "Found the region that body " << e->getName() << " belongs. Going to s_quad[ " << i << " ]\n";
                 quadToGo = quads[i]; //saving the destination quad
-                pathFound = true;
             }
             else
             {
                 /*In this case, entity cent represents the mass center of the current adjacent subquad*/
 
-                //cout << "Calculating net force for body " << e->toString() << " by body " << cent->toString() << "\n";
-
-                /*The force of two entities always points to one another (gravitational law)*/
-                //double fx = Fx(*e, *cent);
-                //double fy = Fy(*e, *cent);
+                double s = 2 * quads[i]->getRegion().getDimension();
                 double r = distance(*e, *cent);
-                double f = F(*e, *cent, r);
-                double fx = Fx(*e, *cent, f, r);
-                double fy = Fy(*e, *cent, f, r);
-                /*As SFx and SFy are only modifies by the thread assigned this chunk, there is no data race*/
-                e->addToSFx(fx);
-                e->addToSFy(fy);
+
+                if ((s / r) < 1.00 || quads[i]->isLeaf()) //far away, or leaφ
+                {
+                    //cout << "Calculating net force for body " << e->getName() << " by body " << cent->getName() << " .Region: " << quads[i]->getRegion().toString() << "\n";
+
+                    double f = F(*e, *cent, r);
+                    double fx = Fx(*e, *cent, f, r);
+                    double fy = Fy(*e, *cent, f, r);
+
+                    /*As SFx and SFy are only modifies by the thread assigned this chunk, there is no data race*/
+                    e->addToSFx(fx);
+                    e->addToSFy(fy);
+                }
+                else //close
+                {
+                    BHTree *children[4] = {quads[i]->getQuad1(), quads[i]->getQuad2(), quads[i]->getQuad3(), quads[i]->getQuad4()};
+                    for (int k = 0; k < 4; k++)
+                    {
+                        //cout<< "Recursion for body" << quads[i]->getEntity()->toString()<<"\n";
+                        if (children[k] != NULL)
+                        { //just for optimization
+                            //cout << "Bodies found close to body " << e->getName() << ". Checking for bodies at quad region " << children[k]->getRegion().toString() << "\n";
+                            netForce(e, children[k]);
+                        }
+                    }
+                }
             }
         }
     }
 
-    /*quadToGo should never be NULL*/
-    assert(quadToGo);
-    netForce(e, quadToGo);
+    if (quadToGo != NULL)
+    {
+        //cout << "Found the region that body " << e->getName() << " belongs. Going to quad on the region " << quadToGo->getRegion().toString() << "\n";
+        netForce(e, quadToGo);
+    }
 }
 
 void newPosition(Entity *e, double dt, double dims)
@@ -456,8 +486,16 @@ void printBHTreeUtil(BHTree *curr)
         return;
     }
 
-    if (curr->isLeaf() && (e = curr->getEntity()) != NULL)
+    if (curr->isLeaf())
     {
+        if (e = curr->getEntity())
+        {
+            std::cout << e->toString() << "\n";
+        }
+    }
+    else
+    {
+        e = curr->getEntity();
         std::cout << e->toString() << "\n";
     }
 

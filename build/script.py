@@ -10,11 +10,12 @@ datasetNames = ["Input1", "Input2", "Input3", "Input4", "Input5"]
 # datasets = ["./../datasets/input1.txt", "./../datasets/input2.txt",
 #           "./../../datasets/input3.txt", "./../../datasets/input4.txt", "./../../datasets/input5.txt"]
 
-datasets = [ #"./../datasets/input1.txt", "./../datasets/input2.txt",
-            "./../datasets/input3.txt"]
-            #, "./../datasets/input4.txt", "./../datasets/input5.txt"]
+datasets = [ "./../datasets/input1.txt", "./../datasets/input2.txt",
+            "./../datasets/input3.txt"
+            , "./../datasets/input4.txt", "./../datasets/input5.txt"]
+
 threads = [0, 1, 2, 4]
-iterations = [100, 500, 1000]
+iterations = [10000,100000]
 
 tex = open("tables.tex", "w+")
 
