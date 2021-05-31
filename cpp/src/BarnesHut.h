@@ -47,6 +47,73 @@ public:
     }
 };
 
+class Region
+{
+private:
+    Point center;
+    double dimension; // start = center - dimension, end = center + dimension
+
+public:
+    Region(Point _center, double _dimension) : center{_center}, dimension{_dimension} {}
+    Region() : center{Point()}, dimension{0} {}
+
+    Point getCenter()
+    {
+        return center;
+    }
+
+    double getDimension()
+    {
+        return dimension;
+    }
+
+    bool containsPoint(Point _center)
+    {
+        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
+        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
+
+        double currY = _center.getY();
+        double currX = _center.getX();
+
+        return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
+    }
+
+    bool containsPoint(Point _center, int quadNo)
+    {
+        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
+        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
+
+        double currY = _center.getY();
+        double currX = _center.getX();
+
+        switch (quadNo)
+        {
+        case 1:
+            return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
+        case 2:
+            return (currY <= yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
+        case 3:
+            return (currY < yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
+        case 4:
+            return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX > xStart);
+        default:
+            assert(0);
+        }
+
+        assert(0);
+        return false;
+    }
+
+    std::string toString()
+    {
+        std::string str;
+        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
+        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
+        str = "x:[" + std::to_string(xStart) + "," + std::to_string(xEnd) + "] y:[" + std::to_string(yStart) + "," + std::to_string(yEnd) + "]";
+        return str;
+    }
+};
+
 class Entity
 {
 private:
@@ -62,9 +129,20 @@ private:
 
     std::string name;
     Point point;
+    Region currentRegion;
 
 public:
     Entity(Point _point, std::string _name, double _Vx, double _Vy, double _mass) : point{_point}, name{_name}, Vx{_Vx}, Vy{_Vy}, mass{_mass} {}
+
+    Region getCurrentRegion()
+    {
+        return currentRegion;
+    }
+
+    void setCurrentRegion(Region _reg)
+    {
+        currentRegion = _reg;
+    }
 
     Point getPoint()
     {
@@ -168,72 +246,6 @@ Entity *massCenter(Entity *e1, Entity *e2)
     return new Entity(Point(centerX, centerY), "MassCenter", 0, 0, mass);
 }
 
-class Region
-{
-private:
-    Point center;
-    double dimension; // start = center - dimension, end = center + dimension
-
-public:
-    Region(Point _center, double _dimension) : center{_center}, dimension{_dimension} {}
-
-    Point getCenter()
-    {
-        return center;
-    }
-
-    double getDimension()
-    {
-        return dimension;
-    }
-
-    bool containsPoint(Point _center)
-    {
-        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
-        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
-
-        double currY = _center.getY();
-        double currX = _center.getX();
-
-        return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
-    }
-
-    bool containsPoint(Point _center, int quadNo)
-    {
-        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
-        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
-
-        double currY = _center.getY();
-        double currX = _center.getX();
-
-        switch (quadNo)
-        {
-        case 1:
-            return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
-        case 2:
-            return (currY <= yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
-        case 3:
-            return (currY < yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
-        case 4:
-            return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX > xStart);
-        default:
-            assert(0);
-        }
-
-        assert(0);
-        return false;
-    }
-
-    std::string toString()
-    {
-        std::string str;
-        double yEnd = center.getY() + dimension, yStart = center.getY() - dimension;
-        double xEnd = center.getX() + dimension, xStart = center.getX() - dimension;
-        str = "x:[" + std::to_string(xStart) + "," + std::to_string(xEnd) + "] y:[" + std::to_string(yStart) + "," + std::to_string(yEnd) + "]";
-        return str;
-    }
-};
-
 class BHTree
 {
 private:
@@ -323,6 +335,7 @@ public:
             {
                 //std::cout << "Insert entity " << _entity->getName() << " to empty leaf in the region " << region.toString() << ".\n";
                 entity = _entity;
+                _entity->setCurrentRegion(region);
                 return true;
             }
 

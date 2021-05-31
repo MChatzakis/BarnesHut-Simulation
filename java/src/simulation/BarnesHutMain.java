@@ -2,7 +2,7 @@ package simulation;
 
 import java.util.ArrayList;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ForkJoinPool;
+//import java.util.concurrent.ForkJoinPool;
 
 import structures.BHTree;
 import structures.Entity;
@@ -31,9 +31,9 @@ public class BarnesHutMain {
 
     long start = System.currentTimeMillis();
 
-    if (runAsStream) {
+    /*if (runAsStream) {
       BarnesHutStream(entities, iters, dims, threads, dt);
-    } else if (threads == 0) {
+    } else*/ if (threads == 0) {
       BarnesHutSequential(entities, iters, dims, dt);
     } else {
       BarnesHutParallel(entities, iters, dims, threads, dt);
@@ -50,7 +50,7 @@ public class BarnesHutMain {
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
-  public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
+  /*public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
 
     ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
 
@@ -69,7 +69,7 @@ public class BarnesHutMain {
 
     customThreadPool.shutdownNow();
 
-  }
+  }*/
 
   public static void BarnesHutParallel(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt)
       throws InterruptedException {

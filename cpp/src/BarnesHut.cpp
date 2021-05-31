@@ -38,7 +38,6 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
 void netForce(Entity *e, BHTree *bh);
 void newPosition(Entity *e, double dt, double dims);
 
-
 int main(int argc, char **argv)
 {
     vector<Entity *> entities;
@@ -128,7 +127,7 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
         //Phase 1: Create a new BHTree for every iteration
         bh = createBHTree(entities, dims);
         //printBHTree(bh);
-        
+
         //Phase 2: Calculate the total force acting on every body (O(nlogn))
         for (Entity *e : entities)
         {
@@ -143,7 +142,7 @@ void BarnesHutSeq(vector<Entity *> &entities, double dims, int iterations, int d
         }
 
         freeBHTree(bh);
-        cout << "Iteration " << i + 1 << "\n";
+        //cout << "Iteration " << i + 1 << "\n";
     }
 }
 
@@ -192,7 +191,7 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
 
         //printBHTree(bh);
         freeBHTree(bh);
-        cout << "Iteration " << i + 1 << "\n";
+        //cout << "Iteration " << i + 1 << "\n";
     }
 }
 
@@ -220,7 +219,7 @@ void netForce(Entity *e, BHTree *bh)
 
             double fx = Fx(*e, *body, f, r);
             double fy = Fy(*e, *body, f, r);
-            
+
             e->addToSFx(fx);
             e->addToSFy(fy);
         }
@@ -264,10 +263,11 @@ void netForce(Entity *e, BHTree *bh)
             {
                 /*In this case, entity cent represents the mass center of the current adjacent subquad*/
 
-                double s = 2 * quads[i]->getRegion().getDimension();
+                double s = 2 * e->getCurrentRegion().getDimension();
+                //double s = 2 * quads[i]->getRegion().getDimension();
                 double r = distance(*e, *cent);
-
-                if ((s / r) < 1.00 || quads[i]->isLeaf()) //far away, or leaφ
+                //(s / r) < 1.00
+                if (r > s || quads[i]->isLeaf()) //far away, or leaf
                 {
                     //cout << "Calculating net force for body " << e->getName() << " by body " << cent->getName() << " .Region: " << quads[i]->getRegion().toString() << "\n";
 
