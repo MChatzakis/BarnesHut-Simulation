@@ -26,7 +26,7 @@ print(make)
 
 # Parallelism Measuerements
 tex.write("\subsection*{4.1 C++ Implementation}")
-for i in range(len(datasets)):
+for i in range(0):
 
     print("---------------------------------------------------------------")
 
@@ -105,9 +105,9 @@ for i in range(len(datasets)):
         tex.write("\end{tabular} \n \end{adjustbox} \n \end{center} \n")
     tex.write("\end{itemize}\n")
 
-tex.write("\subsection*{4.3 Java Implementation}\n")
+tex.write("\n\n\n\n\subsection*{4.3 Java Implementation}\n")
 
-for i in range(0):
+for i in range(len(datasets)):
 
     print("---------------------------------------------------------------")
 

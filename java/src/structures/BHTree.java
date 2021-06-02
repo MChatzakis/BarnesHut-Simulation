@@ -46,6 +46,7 @@ public class BHTree {
          * " to empty leaf in the region " + region.toString() );
          */
         entity = _entity;
+        _entity.setCurrentRegion(region);
         totalEntities++;
         return true;
       }

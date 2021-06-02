@@ -40,18 +40,20 @@ public class BHRunnable implements Runnable {
   public void run() {
     for (int k = 0; k < iters; k++) {
       try {
+
         BHTree bh = BHUtils.createBHTree(entities, dims);
+        barrier.await();
+
         for (int i = from; i < to; i++) {
           BHUtils.netForce(entities.get(i), bh);
         }
-
         barrier.await();
-
+        
         for (int i = from; i < to; i++) {
           BHUtils.newPosition(entities.get(i), dt, dims);
         }
-
         barrier.await();
+
       } catch (Exception e) {
         e.printStackTrace();
       }

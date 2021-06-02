@@ -2,7 +2,7 @@ package simulation;
 
 import java.util.ArrayList;
 import java.util.concurrent.CyclicBarrier;
-//import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinPool;
 
 import structures.BHTree;
 import structures.Entity;
@@ -14,13 +14,7 @@ public class BarnesHutMain {
     String filename = args[0];
     int iters = Integer.parseInt(args[1]);
     int threads = Integer.parseInt(args[2]);
-
     int dt = 1;
-    boolean runAsStream = false;
-
-    if (args.length == 4 && args[3].equals("stream")) {
-      runAsStream = true;
-    }
 
     System.out.println("Filename: " + filename);
     System.out.println("Iterations: " + iters);
@@ -28,15 +22,13 @@ public class BarnesHutMain {
 
     ArrayList<Entity> entities = new ArrayList<>();
     double dims = BHUtils.parseFile(filename, entities);
-
     long start = System.currentTimeMillis();
 
-    /*if (runAsStream) {
-      BarnesHutStream(entities, iters, dims, threads, dt);
-    } else*/ if (threads == 0) {
+    if (threads == 0) {
       BarnesHutSequential(entities, iters, dims, dt);
     } else {
       BarnesHutParallel(entities, iters, dims, threads, dt);
+      //BarnesHutStream(entities, iters, dims, threads, dt);
     }
 
     long finish = System.currentTimeMillis();
@@ -45,16 +37,16 @@ public class BarnesHutMain {
     BHUtils.printEntities(entities);
 
     System.out.println("Execution time: " + (double) timeElapsed * 0.001 + " seconds");
-
     BHUtils.printEntities(entities, "simulationJAVA.txt");
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
-  /*public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
+  public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
 
     ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
 
     for (int i = 0; i < iters; i++) {
+
       BHTree bh = BHUtils.createBHTree(entities, dims);
 
       customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
@@ -69,7 +61,7 @@ public class BarnesHutMain {
 
     customThreadPool.shutdownNow();
 
-  }*/
+  }
 
   public static void BarnesHutParallel(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt)
       throws InterruptedException {

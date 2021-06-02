@@ -134,71 +134,17 @@ public class BHUtils {
 
   }
 
-  public static void netForce(Entity e, BHTree bh, boolean nothing) {
-    if (e == null) {
-      return;
-    }
-
-    if (bh.isLeaf()) {
-      assert (e.equals(bh.getEntity()));
-      return;
-    }
-
-    boolean pathFound = false;
-
-    BHTree[] quads = { bh.getQuad1(), bh.getQuad2(), bh.getQuad3(), bh.getQuad4(), };
-    BHTree quadToGo = null;
-
-    for (int i = 0; i < 4; i++) {
-      if (quads[i] != null) {
-        Region reg = quads[i].getRegion();
-        Entity curr = quads[i].getEntity();
-
-        if (curr != null) {
-          if (!pathFound && reg.containsPoint(e.getPoint())) {
-
-            // System.out.println("Found the region that body " + e.getName() + " belongs.
-            // Going to quad[ " + i + " ]");
-
-            quadToGo = quads[i];
-            pathFound = true;
-          } else {
-
-            // System.out.println("Calculating net force for body " + e.toString() + " by
-            // body " + curr.toString());
-
-            double r = Entity.distance(e, curr);
-            double f = Entity.F(e, curr, r);
-            double fx = Entity.Fx(e, curr, f, r);
-            double fy = Entity.Fy(e, curr, f, r);
-
-            e.addToSFx(fx);
-            e.addToSFy(fy);
-          }
-        }
-      }
-    }
-
-    assert (quadToGo != null);
-    netForce(e, quadToGo);
-  }
-
   public static void netForce(Entity e, BHTree bh) {
+
     if (bh == null) {
       return;
     }
 
-    /*
-     * Reaching a leaf means that the traverse has come to an end. It is clear that
-     * this leaf can only be the leaf containing body e, else there has ocurred an
-     * error through the iterative traverse of the tree
-     */
     if (bh.isLeaf()) {
       Entity body = bh.getEntity();
       if (body != e && body != null) {
         double r = Entity.distance(e, body);
         double f = Entity.F(e, body, r);
-
         double fx = Entity.Fx(e, body, f, r);
         double fy = Entity.Fy(e, body, f, r);
 
@@ -212,14 +158,8 @@ public class BHUtils {
     BHTree quads[] = { bh.getQuad1(), bh.getQuad2(), bh.getQuad3(), bh.getQuad4() };
     BHTree quadToGo = null;
 
-    /*
-     * Through this iteration we have two major aims: 1. Find the subquad that
-     * entity e is located, to proceed there recursively 2. Calculate the force
-     * acting on body e from all other subquads, with each subquad represented
-     * totally as the mass center of all the bodies it contains.
-     */
     for (int i = 0; i < 4; i++) {
-      /* This operation is done only for quads that contain entities */
+
       if (quads[i] != null) {
         Entity cent = quads[i].getEntity();
         Region reg = quads[i].getRegion();
@@ -228,57 +168,38 @@ public class BHUtils {
           continue;
         }
 
-        /*
-         * Warning: pathFound flag is a patch for the cases that bodies are on the
-         * border of different subquads. e.g. If an entity is located at (0,0), we will
-         * (by default) assign in to subquad 1, but containgPoint method will return
-         * true for every subquad of this region. This problem is solved with the help
-         * of this flag, which is set when we find the first matching region.
-         */
         if (reg.containsPoint(e.getPoint(), i + 1)) {
           quadToGo = quads[i]; // saving the destination quad
         } else {
-          /*
-           * In this case, entity cent represents the mass center of the current adjacent
-           * subquad
-           */
-          double s = 2 * quads[i].getRegion().getDimension();
+
+          double s = 2 * e.getCurrentRegion().getDimension();
           double r = Entity.distance(e, cent);
 
-          if ((s / r) < 1.00 || quads[i].isLeaf()) // far away, or leaf
-          {
-            // cout << "Calculating net force for body " << e->getName() << " by body " <<
-            // cent->getName() << " .Region: " << quads[i]->getRegion().toString() << "\n";
+          if (r > s || quads[i].isLeaf()) {
 
             double f = Entity.F(e, cent, r);
             double fx = Entity.Fx(e, cent, f, r);
             double fy = Entity.Fy(e, cent, f, r);
-
             /*
              * As SFx and SFy are only modifies by the thread assigned this chunk, there is
              * no data race
              */
             e.addToSFx(fx);
             e.addToSFy(fy);
-          } else // close
-          {
+          } else {
             BHTree children[] = { quads[i].getQuad1(), quads[i].getQuad2(), quads[i].getQuad3(), quads[i].getQuad4() };
             for (int k = 0; k < 4; k++) {
-              // cout<< "Recursion for body" << quads[i]->getEntity()->toString()<<"\n";
               if (children[k] != null) { // just for optimization
-                                         // cout << "Bodies found close to body " << e->getName() << ". Checking for
-                                         // bodies at quad region " << children[k]->getRegion().toString() << "\n";
                 netForce(e, children[k]);
               }
             }
           }
+
         }
       }
     }
 
     if (quadToGo != null) {
-      // cout << "Found the region that body " << e->getName() << " belongs. Going to
-      // quad on the region " << quadToGo->getRegion().toString() << "\n";
       netForce(e, quadToGo);
     }
   }

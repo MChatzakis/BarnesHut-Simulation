@@ -11,6 +11,7 @@ public class Entity {
   private double SFy;
   private String name;
   private Point point;
+  private Region currentRegion;
 
   public Entity(Point point, String name, double Vx, double Vy, double mass) {
     this.point = point;
@@ -40,6 +41,14 @@ public class Entity {
     String massAp = format.format(mass);
 
     return (this.name + ": " + point.toString() + " " + VxAp + " " + VyAp + " " + massAp);
+  }
+
+  public Region getCurrentRegion() {
+    return currentRegion;
+  }
+
+  public void setCurrentRegion(Region currentRegion) {
+    this.currentRegion = currentRegion;
   }
 
   public static Entity massCenter(Entity e1, Entity e2) {
@@ -79,8 +88,8 @@ public class Entity {
 
   public static double Fy(Entity e1, Entity e2, double f, double r) {
     double y1 = e1.getPoint().getY(), y2 = e2.getPoint().getY();
-    //double r = distance(e1, e2);
-    //double f = F(e1, e2, r);
+    // double r = distance(e1, e2);
+    // double f = F(e1, e2, r);
     return f * (y2 - y1) / r;
   }
 

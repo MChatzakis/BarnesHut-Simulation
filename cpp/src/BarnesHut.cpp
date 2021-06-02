@@ -202,11 +202,6 @@ void netForce(Entity *e, BHTree *bh)
         return;
     }
 
-    /*
-        Reaching a leaf means that the traverse has come to an end.
-        It is clear that this leaf can only be the leaf containing body e, 
-        else there has ocurred an error through the iterative traverse of the tree
-    */
     if (bh->isLeaf())
     {
         Entity *body = bh->getEntity();
@@ -230,12 +225,6 @@ void netForce(Entity *e, BHTree *bh)
     BHTree *quads[4] = {bh->getQuad1(), bh->getQuad2(), bh->getQuad3(), bh->getQuad4()};
     BHTree *quadToGo = NULL;
 
-    /*
-        Through this iteration we have two major aims:
-        1. Find the subquad that entity e is located, to proceed there recursively
-        2. Calculate the force acting on body e from all other subquads, with each subquad 
-        represented totally as the mass center of all the bodies it contains.
-    */
     for (int i = 0; i < 4; i++)
     {
         /*This operation is done only for quads that contain entities*/
@@ -249,12 +238,6 @@ void netForce(Entity *e, BHTree *bh)
                 continue;
             }
 
-            /*
-                Warning: pathFound flag is a patch for the cases that bodies are on the border of different subquads.
-                e.g. If an entity is located at (0,0), we will (by default) assign in to subquad 1, but containgPoint 
-                method will return true for every subquad of this region. 
-                This problem is solved with the help of this flag, which is set when we find the first matching region.  
-            */
             if (reg.containsPoint(e->getPoint(), i + 1))
             {
                 quadToGo = quads[i]; //saving the destination quad
@@ -264,9 +247,8 @@ void netForce(Entity *e, BHTree *bh)
                 /*In this case, entity cent represents the mass center of the current adjacent subquad*/
 
                 double s = 2 * e->getCurrentRegion().getDimension();
-                //double s = 2 * quads[i]->getRegion().getDimension();
                 double r = distance(*e, *cent);
-                //(s / r) < 1.00
+
                 if (r > s || quads[i]->isLeaf()) //far away, or leaf
                 {
                     //cout << "Calculating net force for body " << e->getName() << " by body " << cent->getName() << " .Region: " << quads[i]->getRegion().toString() << "\n";
@@ -279,7 +261,7 @@ void netForce(Entity *e, BHTree *bh)
                     e->addToSFx(fx);
                     e->addToSFy(fy);
                 }
-                else //close
+                else
                 {
                     BHTree *children[4] = {quads[i]->getQuad1(), quads[i]->getQuad2(), quads[i]->getQuad3(), quads[i]->getQuad4()};
                     for (int k = 0; k < 4; k++)
