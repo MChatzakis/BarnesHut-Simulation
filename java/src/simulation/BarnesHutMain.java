@@ -37,7 +37,7 @@ public class BarnesHutMain {
     BHUtils.printEntities(entities);
 
     System.out.println("Execution time: " + (double) timeElapsed * 0.001 + " seconds");
-    BHUtils.printEntities(entities, "simulationJAVA.txt");
+    BHUtils.printEntities(entities, "outputJAVA.txt");
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
