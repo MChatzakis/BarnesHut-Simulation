@@ -2,7 +2,7 @@ package simulation;
 
 import java.util.ArrayList;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ForkJoinPool;
+//import java.util.concurrent.ForkJoinPool;
 
 import structures.BHTree;
 import structures.Entity;
@@ -29,6 +29,7 @@ public class BarnesHutMain {
     } else {
       BarnesHutParallel(entities, iters, dims, threads, dt);
       //BarnesHutStream(entities, iters, dims, threads, dt);
+      //BarnesHutParallelv2(entities, iters, dims, threads, dt);
     }
 
     long finish = System.currentTimeMillis();
@@ -41,27 +42,28 @@ public class BarnesHutMain {
     BHUtils.appendToFile("timesJAVA.txt", (double) timeElapsed * 0.001);
   }
 
-  public static void BarnesHutStream(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) {
-
-    ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
-
-    for (int i = 0; i < iters; i++) {
-
-      BHTree bh = BHUtils.createBHTree(entities, dims);
-
-      customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
-        BHUtils.netForce(e, bh);
-      }));
-
-      customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
-        BHUtils.newPosition(e, dt, dims);
-      }));
-
-    }
-
-    customThreadPool.shutdownNow();
-
-  }
+  /*
+   * public static void BarnesHutStream(ArrayList<Entity> entities, int iters,
+   * double dims, int threadsNum, int dt) {
+   * 
+   * ForkJoinPool customThreadPool = new ForkJoinPool(threadsNum);
+   * 
+   * for (int i = 0; i < iters; i++) {
+   * 
+   * BHTree bh = BHUtils.createBHTree(entities, dims);
+   * 
+   * customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
+   * BHUtils.netForce(e, bh); }));
+   * 
+   * customThreadPool.submit(() -> entities.parallelStream().forEach(e -> {
+   * BHUtils.newPosition(e, dt, dims); }));
+   * 
+   * }
+   * 
+   * customThreadPool.shutdownNow();
+   * 
+   * }
+   */
 
   public static void BarnesHutParallel(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt)
       throws InterruptedException {
@@ -86,6 +88,40 @@ public class BarnesHutMain {
 
     for (int i = 0; i < threads.length; i++) {
       threads[i].join();
+    }
+  }
+
+  public static void BarnesHutParallelv2(ArrayList<Entity> entities, int iters, double dims, int threadsNum, int dt) throws InterruptedException {
+    
+    int[] fromArr = new int[threadsNum];
+    int[] toArr = new int[threadsNum];
+    Thread[] threads = new Thread[threadsNum];
+    CyclicBarrier barrier = new CyclicBarrier(threadsNum);
+
+    int sets = entities.size() / threadsNum;
+    
+    for (int i = 0; i < threads.length; i++) {
+      fromArr[i] = i * sets;
+      if (i != threadsNum - 1) {
+        toArr[i] = (i + 1) * sets;
+      } else {
+        toArr[i] = entities.size();
+      }
+    }
+
+    for (int i = 0; i < iters; i++) {
+
+      BHTree bh = BHUtils.createBHTree(entities, dims);
+
+      for (int k = 0; k < threads.length; k++) {
+        threads[k] = new Thread(new BHSimpleRunnable(entities, fromArr[k], toArr[k], dt, dims, barrier, bh),
+            "thread" + (k + 1));
+        threads[k].start();
+      }
+
+      for (int k = 0; k < threads.length; k++) {
+        threads[k].join();
+      }
     }
   }
 

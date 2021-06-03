@@ -40,7 +40,7 @@ public class Region {
       case 2:
         return (currY <= yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
       case 3:
-        return (currY < yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
+        return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
       case 4:
         return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX > xStart);
       default:

@@ -39,11 +39,11 @@ cleanJavaClassFiles:
 
 cleanJava: cleanJavaClassFiles
 	rm -rf $(JAR_NAME)	
-	rm -rf simulationJAVA.txt
+	rm -rf outputJAVA.txt
 	rm -rf timesJAVA.txt
 	
 cleanCPP: 
 	rm -rf $(CPP_NAME)	
-	rm -rf simulationCPP.txt
+	rm -rf outputCPP.txt
 	rm -rf timesCPP.txt
 	

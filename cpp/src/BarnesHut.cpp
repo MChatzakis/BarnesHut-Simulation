@@ -38,6 +38,48 @@ void BarnesHutPar(vector<Entity *> &entities, double dims, int iterations, int t
 void netForce(Entity *e, BHTree *bh);
 void newPosition(Entity *e, double dt, double dims);
 
+void testReg()
+{
+    BHTree *bh = new BHTree(Region(Point(0, 0), 4));
+    bh->insertEntity(new Entity(Point(2, 2), "m1", 0, 0, 10));
+    bh->insertEntity(new Entity(Point(-2, 2), "m2", 0, 0, 10));
+    bh->insertEntity(new Entity(Point(-2, -2), "m3", 0, 0, 10));
+    bh->insertEntity(new Entity(Point(2, -2), "m4", 0, 0, 10));
+    bh->insertEntity(new Entity(Point(-4, -4), "m44", 0, 0, 10));
+
+    printBHTree(bh);
+
+    Point p = Point(100, 100);
+
+    Point p1 = Point(0, 0);   //ok
+    Point p2 = Point(2, 0);   //ok
+    Point p3 = Point(0, 2);   //ok
+    Point p4 = Point(-2, 0);  //ok
+    Point p5 = Point(0, -2);  //ok
+    Point p6 = Point(4, 4);   //ok
+    Point p7 = Point(-4, 4);  //ok
+    Point p8 = Point(-4, -4); //ok
+    Point p9 = Point(4, -4);  //ok
+    Point p10 = Point(4, 0);  //ok
+    Point p11 = Point(-4, 0); //ok
+    Point p12 = Point(0, 4);  //ok
+    Point p13 = Point(0, -4); //ok
+
+    BHTree *q[4] = {bh->getQuad1(), bh->getQuad2(), bh->getQuad3(), bh->getQuad4()};
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (q[i]->getRegion().containsPoint(p, i + 1))
+        {
+            cout << "Quad " << i + 1 << " contains the point " << p.toString() << "!\n";
+        }
+        else
+        {
+            cout << "Quad " << i + 1 << " does not contains the point " << p.toString() << "!\n";
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     vector<Entity *> entities;
@@ -64,7 +106,7 @@ int main(int argc, char **argv)
         case 'r':
             printResults = 1;
             break;
-        case 'h': /*help*/
+        case 'h':
             printf(
                 "Usage: ./bhCPP -f dataset -i iterations -t threads [-m]\n"
                 "Options:\n"
@@ -83,10 +125,10 @@ int main(int argc, char **argv)
 
     dims = loadEntities(filename, entities);
 
-    /*This method for time measuring is accurate, giving the same results as time ./exec*/
+    //This method for time measuring is accurate, giving the same results as time ./exec
     auto start = high_resolution_clock::now();
 
-    /*Sequential implementation is differianted from parallel*/
+    //Sequential implementation is differianted from parallel
     if (threads == 0)
     {
         BarnesHutSeq(entities, dims, iters, 1); //dt = 1 by default
@@ -104,7 +146,7 @@ int main(int argc, char **argv)
         printEntities(entities);
     }
 
-    /*The time measurements are appended to file to calculate statistics about the implementation*/
+    //The time measurements are appended to file to calculate statistics about the implementation
     if (printTime)
     {
         double seconds = duration.count() * 0.001;
@@ -112,9 +154,10 @@ int main(int argc, char **argv)
         appendTimeMeasurementsToFile("timesCPP.txt", seconds);
     }
 
-    printEntitiesToFile("simulationCPP.txt", entities);
-    freeEntities(entities);
+    printEntitiesToFile("outputCPP.txt", entities);
+    //freeEntities(entities);
 
+    //testReg();
     return 0;
 }
 

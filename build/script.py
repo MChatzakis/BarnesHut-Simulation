@@ -51,7 +51,7 @@ for i in range(0):
 
             for m in range(tests):
                 command = "./bhCPP -f " + datasets[i] + " -i " + \
-                    str(iterations[j]) + " -t " + str(threads[k]) + " -m"
+                    str(iterations[j]) + " -t " + str(threads[k]) + " -m -r"
                 print(command)
 
                 out = subprocess.getoutput(command)
@@ -167,7 +167,8 @@ for i in range(len(datasets)):
 
             speedupClassic = 0
             speedupN = 0
-            sdv = 0
+            #sdv = 0
+            sdv = "{:.5f}".format(stddev[y])
 
             if(y > 0):
                 speedupClassic = "{:.5f}".format(avg[0]/avg[y])

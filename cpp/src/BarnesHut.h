@@ -89,12 +89,16 @@ public:
         switch (quadNo)
         {
         case 1:
+            //std::cout << "Point contained in quad no " << 1 << "\n";
             return (currY <= yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
         case 2:
+            //std::cout << "Point contained in quad no " << 2 << "\n";
             return (currY <= yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
         case 3:
-            return (currY < yEnd && currY >= yStart) && (currX < xEnd && currX >= xStart);
+            //std::cout << "Point contained in quad no " << quadNo << "\n";
+            return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX >= xStart);
         case 4:
+            //std::cout << "Point contained in quad no " << quadNo << "\n";
             return (currY < yEnd && currY >= yStart) && (currX <= xEnd && currX > xStart);
         default:
             assert(0);
