@@ -1,5 +1,5 @@
 # BarnesHut-Simulation
-Implementing and parallelizing Barnes-Hut algorithm fot N-body simulation
+Implementing and parallelizing Barnes-Hut algorithm for N-body simulation
 
 ## Prerequisites
 To compile and run this program, the system must have the following prerequisites: \
